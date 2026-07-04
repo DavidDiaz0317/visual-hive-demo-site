@@ -1,0 +1,42 @@
+name: Visual Hive Scheduled
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  visual-hive-scheduled:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout demo repo
+        uses: actions/checkout@v4
+        with:
+          path: visual-hive-demo-site
+
+      - name: Checkout Visual Hive CLI
+        uses: actions/checkout@v4
+        with:
+          repository: DavidDiaz0317/visual-hive
+          path: vis-hive
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and build Visual Hive
+        working-directory: vis-hive
+        run: npm ci && npm run build
+
+      - name: Install demo app
+        working-directory: visual-hive-demo-site
+        run: npm ci
+
+      - name: Run safe scheduled suite
+        working-directory: visual-hive-demo-site
+        run: npm run vh:all

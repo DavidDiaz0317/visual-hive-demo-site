@@ -1,0 +1,67 @@
+name: Visual Hive PR
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  visual-hive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout demo repo
+        uses: actions/checkout@v4
+        with:
+          path: visual-hive-demo-site
+
+      - name: Checkout Visual Hive CLI
+        uses: actions/checkout@v4
+        with:
+          repository: DavidDiaz0317/visual-hive
+          path: vis-hive
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            visual-hive-demo-site/package-lock.json
+            vis-hive/package-lock.json
+
+      - name: Install Visual Hive
+        working-directory: vis-hive
+        run: npm ci
+
+      - name: Build Visual Hive
+        working-directory: vis-hive
+        run: npm run build
+
+      - name: Install demo app
+        working-directory: visual-hive-demo-site
+        run: npm ci
+
+      - name: Build demo app
+        working-directory: visual-hive-demo-site
+        run: npm run build
+
+      - name: Visual Hive doctor
+        working-directory: visual-hive-demo-site
+        run: npm run vh:doctor
+
+      - name: Visual Hive plan
+        working-directory: visual-hive-demo-site
+        run: npm run vh:plan
+
+      - name: Visual Hive run
+        working-directory: visual-hive-demo-site
+        run: npm run vh:run
+
+      - name: Visual Hive report
+        working-directory: visual-hive-demo-site
+        run: npm run vh:report -- --github-step-summary

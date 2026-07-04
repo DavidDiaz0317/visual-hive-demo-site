@@ -1,32 +1,92 @@
 {
   "message": "Demo metrics loaded",
+  "generatedAt": "2026-07-04T12:00:00.000Z",
   "items": [
-    { "label": "Contracts", "value": "18", "trend": "+4", "tone": "good" },
-    { "label": "Routes", "value": "7", "trend": "+2", "tone": "good" },
-    { "label": "Mutation score", "value": "83%", "trend": "+9", "tone": "watch" },
-    { "label": "Visual diffs", "value": "0", "trend": "stable", "tone": "good" }
+    { "label": "Contracts", "value": "11", "trend": "critical paths covered", "tone": "good" },
+    { "label": "Targets", "value": "6", "trend": "local, command group, Storybook, deploy, URL, protected", "tone": "good" },
+    { "label": "Mutation operators", "value": "12", "trend": "mapped to deterministic assertions", "tone": "watch" },
+    { "label": "External calls", "value": "0", "trend": "provider and Hive handoff stay dry-run", "tone": "good" }
   ],
   "lanes": [
-    { "name": "PR local preview", "target": "localPreview", "status": "passing", "cadence": "Every pull request", "screenshots": 4 },
-    { "name": "Canary sweep", "target": "localPreview", "status": "watching", "cadence": "15 minute schedule", "screenshots": 2 },
-    { "name": "Protected hosted lane", "target": "unsafeHosted", "status": "blocked", "cadence": "Requires secrets", "screenshots": 0 }
+    {
+      "name": "PR local preview",
+      "target": "localPreview",
+      "kind": "command",
+      "status": "passed",
+      "cadence": "Every pull request",
+      "screenshots": 8,
+      "note": "Default first-party evidence lane."
+    },
+    {
+      "name": "Full stack fixture",
+      "target": "fullStackPreview",
+      "kind": "commandGroup",
+      "status": "review",
+      "cadence": "Manual demo",
+      "screenshots": 1,
+      "note": "Starts web and mock API services together."
+    },
+    {
+      "name": "Component lab",
+      "target": "componentLibrary",
+      "kind": "storybook",
+      "status": "created",
+      "cadence": "Component visual review",
+      "screenshots": 1,
+      "note": "Exercises Storybook target discovery."
+    },
+    {
+      "name": "Hosted preview",
+      "target": "deployPreview",
+      "kind": "deployPreview",
+      "status": "review",
+      "cadence": "Trusted preview only",
+      "screenshots": 1,
+      "note": "Uses fallback URL or provider preview env."
+    },
+    {
+      "name": "Public URL reference",
+      "target": "hostedReference",
+      "kind": "url",
+      "status": "review",
+      "cadence": "Manual hosted smoke",
+      "screenshots": 1,
+      "note": "Documents hosted/demo target behavior."
+    },
+    {
+      "name": "Protected hosted lane",
+      "target": "unsafeHosted",
+      "kind": "protected",
+      "status": "blocked",
+      "cadence": "Requires secrets",
+      "screenshots": 0,
+      "note": "Kept out of untrusted PR runs."
+    }
   ],
   "stages": [
-    { "name": "Plan", "duration": "0.4s", "status": "passed" },
-    { "name": "Contracts", "duration": "3.2s", "status": "passed" },
-    { "name": "Screenshots", "duration": "2.8s", "status": "created" },
-    { "name": "Triage", "duration": "0.7s", "status": "review" }
+    { "name": "Analyze", "command": "npm run vh:analyze", "duration": "0.6s", "status": "passed" },
+    { "name": "Plan", "command": "npm run vh:plan", "duration": "0.4s", "status": "passed" },
+    { "name": "Run", "command": "npm run vh:run", "duration": "8.2s", "status": "passed" },
+    { "name": "Mutate", "command": "npm run vh:mutate", "duration": "38s", "status": "review" },
+    { "name": "Evidence", "command": "npm run vh:evidence", "duration": "0.5s", "status": "created" },
+    { "name": "Hive export", "command": "npm run vh:hive-export", "duration": "0.4s", "status": "created" }
   ],
   "coverage": [
-    { "name": "Dashboard shell", "desktop": "covered", "mobile": "covered", "risk": "low" },
-    { "name": "API fallback", "desktop": "covered", "mobile": "partial", "risk": "medium" },
-    { "name": "Auth boundary", "desktop": "covered", "mobile": "covered", "risk": "high" },
-    { "name": "Visual assets", "desktop": "covered", "mobile": "covered", "risk": "medium" }
+    { "name": "App shell", "contract": "app-shell-stability", "desktop": "covered", "mobile": "covered", "risk": "low" },
+    { "name": "Auth boundary", "contract": "public-auth-boundary", "desktop": "covered", "mobile": "covered", "risk": "critical" },
+    { "name": "Seeded scenarios", "contract": "scenario-gallery-contract", "desktop": "covered", "mobile": "partial", "risk": "high" },
+    { "name": "API error state", "contract": "api-error-state-contract", "desktop": "covered", "mobile": "covered", "risk": "high" },
+    { "name": "Image assets", "contract": "visual-asset-contract", "desktop": "covered", "mobile": "partial", "risk": "medium" },
+    { "name": "Hive handoff", "contract": "hive-integration-lane", "desktop": "covered", "mobile": "partial", "risk": "medium" },
+    { "name": "Command matrix", "contract": "command-matrix-readiness", "desktop": "covered", "mobile": "covered", "risk": "medium" },
+    { "name": "Storybook component", "contract": "component-lab-storybook", "desktop": "partial", "mobile": "partial", "risk": "medium" }
   ],
   "artifacts": [
-    { "name": "dashboard-desktop", "type": "screenshot", "detail": "1440 x 900 baseline" },
-    { "name": "dashboard-mobile", "type": "screenshot", "detail": "390 x 844 baseline" },
-    { "name": "report.json", "type": "json", "detail": "Deterministic run output" },
-    { "name": "llm-triage.md", "type": "prompt", "detail": "Offline advisory context" }
+    { "name": "report.json", "type": "json", "detail": "Deterministic run verdict source" },
+    { "name": "mutation-report.json", "type": "json", "detail": "Operator kill/survival evidence" },
+    { "name": "evidence-packet.json", "type": "json", "detail": "Sanitized handoff context" },
+    { "name": "hive/hive-export.json", "type": "json", "detail": "No-network Hive beads and graph" },
+    { "name": "triage-prompt.md", "type": "prompt", "detail": "Offline prompt-only advisory context" },
+    { "name": "screenshots/app-shell-desktop.png", "type": "screenshot", "detail": "Local Playwright evidence" }
   ]
 }

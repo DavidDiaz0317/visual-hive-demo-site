@@ -1,0 +1,52 @@
+name: Visual Hive Hive Export
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  hive-export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout demo repo
+        uses: actions/checkout@v4
+        with:
+          path: visual-hive-demo-site
+
+      - name: Checkout Visual Hive CLI
+        uses: actions/checkout@v4
+        with:
+          repository: DavidDiaz0317/visual-hive
+          path: vis-hive
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and build Visual Hive
+        working-directory: vis-hive
+        run: npm ci && npm run build
+
+      - name: Install demo app
+        working-directory: visual-hive-demo-site
+        run: npm ci
+
+      - name: Build deterministic evidence
+        working-directory: visual-hive-demo-site
+        run: npm run build && npm run vh:plan && npm run vh:run && npm run vh:evidence
+
+      - name: Dry-run Hive handoff
+        working-directory: visual-hive-demo-site
+        run: npm run vh:handoff
+
+      - name: Hive export
+        working-directory: visual-hive-demo-site
+        run: npm run vh:hive-export
+
+      - name: Guarded repair preview
+        working-directory: visual-hive-demo-site
+        run: npm run vh:hive-guarded-preview
