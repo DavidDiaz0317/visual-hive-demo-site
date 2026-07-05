@@ -1,2 +1,4 @@
 src/App.tsx
 src/styles.css
+visual-hive.config.yaml
+public/api/dashboard-data

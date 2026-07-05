@@ -1,0 +1,108 @@
+project:
+  name: visual-hive-demo-site
+  type: react-vite
+  defaultBranch: main
+
+targets:
+  localPreview:
+    kind: command
+    install: "npm ci"
+    build: "npm run build"
+    serve: "npm run preview -- --port 4173 --strictPort"
+    url: "http://127.0.0.1:4173"
+    prSafe: true
+    cost: cheap
+
+contracts:
+  - id: seeded-force-login-public-demo
+    description: Seeded public-demo login regression should be caught by deterministic no-login contracts.
+    target: localPreview
+    severity: critical
+    runOn:
+      pullRequest: true
+      schedule: true
+    waitFor:
+      - selector: "[data-testid='dashboard-page']"
+        state: visible
+        timeoutMs: 5000
+    selectors:
+      mustExist:
+        - "[data-testid='dashboard-page']"
+        - "[data-testid='critical-action-button']"
+      mustNotExist:
+        - "[data-testid='login-page']"
+        - "[data-testid='github-login-button']"
+        - "[data-testid='protected-route']"
+      textMustNotExist:
+        - "Continue with GitHub"
+        - "This route is intentionally not allowed in public demo mode."
+    screenshots:
+      - name: seeded-force-login-desktop
+        route: "/?issue=force-login-on-demo"
+        viewport: desktop
+        fullPage: true
+        mask:
+          - "[data-testid='dynamic-run-id']"
+
+viewports:
+  desktop:
+    width: 1440
+    height: 900
+  mobile:
+    width: 390
+    height: 844
+
+visual:
+  maxDiffPixelRatio: 0.01
+  updateSnapshots: false
+  failOnMissingBaselineInCI: true
+  snapshotDir: ".visual-hive/snapshots"
+  artifactDir: ".visual-hive/artifacts"
+
+selection:
+  changedFiles:
+    - pattern: "src/**"
+      contracts:
+        - seeded-force-login-public-demo
+      risk: critical
+
+mutation:
+  enabled: false
+  operators: []
+
+ai:
+  enabled: false
+  provider: none
+  neverSoleOracle: true
+  createIssuePrompt: true
+  maxDailyRuns: 1
+
+providers:
+  playwright:
+    enabled: true
+    mode: external
+    requiredEnv: []
+
+integrations:
+  hive:
+    enabled: true
+    mode: dry_run
+    acmmLevel: 5
+    defaultActor: quality
+    labels:
+      - visual-hive
+      - hive/quality
+      - seeded-defect
+    repair:
+      enabled: true
+      prOnly: true
+      maxAttempts: 1
+      requireHumanReview: true
+      rerunVisualHive: true
+
+github:
+  enabled: true
+  issueLabels:
+    - visual-hive
+    - seeded-defect
+  commentMarker: "<!-- visual-hive-report -->"

@@ -1,0 +1,69 @@
+name: Visual Hive Scheduled
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  visual-hive-scheduled:
+    runs-on: ubuntu-latest
+    env:
+      VISUAL_HIVE_CLI: ${{ github.workspace }}/visual-hive-tooling/packages/cli/dist/index.js
+    steps:
+      - name: Checkout demo repo
+        uses: actions/checkout@v4
+
+      - name: Checkout Visual Hive
+        uses: actions/checkout@v4
+        with:
+          repository: DavidDiaz0317/visual-hive
+          ref: codex/control-plane-guided-cockpit
+          path: visual-hive-tooling
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and build Visual Hive
+        working-directory: visual-hive-tooling
+        run: npm ci && npm run build
+
+      - name: Install and build demo app
+        run: npm ci && npx playwright install --with-deps chromium && npm run build && npm run typecheck
+
+      - name: Run scheduled Visual Hive evidence chain
+        run: |
+          # Writes .visual-hive/baselines.json before artifact upload.
+          npm run vh:doctor
+          npm run vh:plan
+          npm run vh:run:seed
+          npm run vh:run:ci
+          node scripts/visual-hive-cli.mjs baselines list --config visual-hive.config.yaml --write
+          npm run vh:mutate
+          npm run vh:coverage
+          npm run vh:provider-upload
+          npm run vh:triage
+          npm run vh:evidence
+          npm run vh:handoff
+          npm run vh:hive-export
+          npm run vh:handoff-validate
+          npm run vh:test-creation
+          npm run vh:snapshot
+          npm run vh:artifacts
+          npm run vh:report -- --github-step-summary
+
+      - name: Upload Visual Hive artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-hive-scheduled
+          path: .visual-hive
+          include-hidden-files: true
+
+      # Optional future provider/protected lanes can reference trusted secrets here,
+      # but external provider/Hive API calls are disabled by default in this repo.
