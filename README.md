@@ -58,6 +58,9 @@ npm run vh:evidence
 npm run vh:verdict
 npm run vh:handoff
 npm run vh:handoff-validate
+npm run vh:issues
+npm run vh:issues:publish
+npm run vh:agent:issue
 npm run vh:snapshot
 npm run vh:artifacts
 ```
@@ -127,11 +130,29 @@ The snapshot is a local artifact consumed by the Visual Hive Control Plane. It i
 ## Issue Handoff
 
 ```bash
+npm run vh:issues
+npm run vh:issues:publish
 npm run vh:handoff
 npm run vh:handoff-dry-run
+npm run vh:agent:issue
 ```
 
-The dry run simulates create/update/block behavior with `networkCallsMade: 0`. Real issue creation is only for trusted workflows that consume sanitized artifacts and do not execute untrusted PR code.
+Visual Hive's production route is issue-centric:
+
+1. `vh:issues` turns deterministic findings into stable, deduplicated issue candidates in `.visual-hive/issues.json`, `.visual-hive/issues.md`, and `.visual-hive/issue-queue.json`.
+2. `vh:issues:publish` writes a no-network publish plan and dry-run result. It simulates create/update/block behavior with `networkCallsMade: 0`.
+3. `vh:agent:issue` builds a bounded no-write agent request/output bundle from the first issue candidate. The agent receives evidence, guardrails, and a validation command, but Visual Hive does not repair code.
+4. Trusted workflows may run live issue publishing only after sanitized artifacts and handoff validation pass.
+
+Real issue creation is only for trusted workflows or explicit guarded live smoke commands that consume sanitized artifacts and do not execute untrusted PR code. The local/default path creates zero real issues.
+
+Guarded live issue publishing for first-class issue candidates is available, but blocked unless explicitly enabled:
+
+```bash
+VISUAL_HIVE_LIVE_GITHUB_ISSUE=true GH_TOKEN=... npm run vh:issues:publish:live
+```
+
+Rerunning the live publisher uses the issue dedupe fingerprint to update the same issue instead of creating duplicates.
 
 Optional live issue smoke is disabled by default:
 
