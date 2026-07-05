@@ -36,6 +36,9 @@ jobs:
       - name: Install demo app
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Run external Visual Hive full proof
         run: npm run vh:full-run
 
