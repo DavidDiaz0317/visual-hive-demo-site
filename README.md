@@ -133,6 +133,14 @@ npm run vh:handoff-dry-run
 
 The dry run simulates create/update/block behavior with `networkCallsMade: 0`. Real issue creation is only for trusted workflows that consume sanitized artifacts and do not execute untrusted PR code.
 
+Optional live issue smoke is disabled by default:
+
+```bash
+npm run vh:live-issue-smoke
+```
+
+Without `VISUAL_HIVE_LIVE_GITHUB_ISSUE=true`, this writes `.visual-hive/live-issue-smoke.json` with `status: blocked` and makes zero network calls. To run a real smoke from a trusted non-PR context, set `VISUAL_HIVE_LIVE_GITHUB_ISSUE=true`, provide `GH_TOKEN` or `GITHUB_TOKEN`, and ensure `npm run vh:handoff-validate` passes first. The smoke creates or updates an issue labeled `visual-hive`, `hive/quality`, and `e2e-smoke` with title prefix `[Visual Hive smoke]`.
+
 ## Using Visual Hive On Another Real Repo
 
 1. Build or install Visual Hive and point `VISUAL_HIVE_CLI` at the CLI if needed.
