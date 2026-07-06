@@ -152,7 +152,7 @@ Guarded live issue publishing for first-class issue candidates is available, but
 VISUAL_HIVE_LIVE_GITHUB_ISSUE=true GH_TOKEN=... npm run vh:issues:publish:live
 ```
 
-Rerunning the live publisher uses the issue dedupe fingerprint to update the same issue instead of creating duplicates.
+The live script is intentionally scoped to `--kind missing_visual_coverage --limit 1` so a trusted smoke updates one candidate instead of publishing the whole queue. For production use, prefer an explicit `--dedupe <fingerprint>` once the owning issue candidate is known. Rerunning the live publisher uses the issue dedupe fingerprint to update the same issue instead of creating duplicates.
 
 Optional live issue smoke is disabled by default:
 
