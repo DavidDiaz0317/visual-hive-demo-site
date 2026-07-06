@@ -410,6 +410,8 @@ async function verifyIssueQueue() {
   assert(agentRun.schemaVersion === "visual-hive.agent-issue-run.v1", "issue agent run must use the issue-run schema.");
   assert(agentRun.mode === "no_write", "default issue agent run must be no-write.");
   assert(agentRun.status === "completed", "default issue agent run must complete.");
+  assert(agentRun.agentExecution?.status === "completed", "default issue agent run must execute the local no-network demo agent.");
+  assert(String(agentRun.agentExecution?.stdoutExcerpt ?? "").includes("Local Visual Hive issue agent"), "issue agent output must include local agent evidence.");
   assert(agentRun.profile === "test_creator_agent", "first issue should route to the test creator agent.");
   assert(agentRun.safety?.sourceMutations === 0, "issue agent must not mutate source in default mode.");
   assert(agentRun.safety?.externalCallsMade === 0, "issue agent must make zero external calls in default mode.");
