@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -84,6 +84,17 @@ const artifactsBySection = {
     ".visual-hive/hive/trusted-repair-workflow-dry-run.json",
     ".visual-hive/hive-issue-dry-run.json"
   ],
+  "Issue queue and agent handoff": [
+    ".visual-hive/issues.json",
+    ".visual-hive/issues.md",
+    ".visual-hive/issue-queue.json",
+    ".visual-hive/issue-publish-plan.json",
+    ".visual-hive/issue-publish-dry-run.json",
+    ".visual-hive/issue-publish-result.json",
+    ".visual-hive/agents/*/agent-request.md",
+    ".visual-hive/agents/*/agent-output.md",
+    ".visual-hive/agents/*/agent-run.json"
+  ],
   "Agent packets/tools/MCP/context": [
     ".visual-hive/test-creation-plan.json",
     ".visual-hive/agent-packet.json",
@@ -116,6 +127,7 @@ const sections = [
     ["vh:handoff", "vh:hive-export", "vh:hive-guarded-preview", "vh:hive-repair-envelope", "vh:hive-repair-consumer", "vh:hive-repair-workflow", "vh:handoff-validate", "vh:hive-modes", "vh:handoff-dry-run"],
     verifyHandoff
   ),
+  section("Issue queue and agent handoff", ["vh:issues", "vh:issues:publish", "vh:agent:issue"], verifyIssueQueue),
   section("Agent packets/tools/MCP/context", ["vh:test-creation", "vh:agent-packet", "vh:agent-packet:handoff", "vh:agent-packet:provider", "vh:tools", "vh:mcp", "vh:context", "vh:schemas"], verifyAgentTooling),
   section("Control Plane and UI", ["vh:snapshot", "vh:artifacts", "vh:control-plane-smoke"], verifyControlPlane),
   section("External repo summary", [], verifySummaryPlaceholder)
@@ -377,6 +389,44 @@ async function verifyHandoff() {
   metrics.handoffPackets += 1;
   metrics.issueDryRuns += 1;
   metrics.networkCallsMade += dryRun.networkCallsMade ?? 0;
+}
+
+async function verifyIssueQueue() {
+  const issues = await readJson("issues.json");
+  const queue = await readJson("issue-queue.json");
+  const publish = await readJson("issue-publish-result.json");
+  const agentRun = await readJson(await findFirstAgentArtifact("agent-run.json"));
+  const issuesMarkdown = await readText("issues.md");
+  assert(issues.schemaVersion === "visual-hive.issues.v1", "issues.json must use the first-class issue schema.");
+  assert(Array.isArray(issues.issues) && issues.issues.length > 0, "issues.json must include issue candidates.");
+  assert(issues.issues.every((issue) => String(issue.dedupeFingerprint ?? "").startsWith("visual-hive:")), "every issue candidate must include a Visual Hive dedupe fingerprint.");
+  assert(issuesMarkdown.includes("Visual Hive") && issuesMarkdown.includes("Dedupe"), "issues.md must be human-readable issue evidence.");
+  assert(queue.schemaVersion === "visual-hive.issue-queue.v1", "issue-queue.json must use the issue queue schema.");
+  assert(Array.isArray(queue.queues?.ready_for_hive), "issue queue must group issues for Hive readiness.");
+  assert(publish.status === "dry_run_written", "default issue publish script must remain dry-run.");
+  assert((publish.externalCallsMade ?? 0) === 0, "issue publish dry-run must make zero external calls.");
+  assert((publish.networkCallsMade ?? 0) === 0, "issue publish dry-run must make zero network calls.");
+  assert((publish.realGithubIssuesCreated ?? 0) === 0, "issue publish dry-run must create zero real issues.");
+  assert(agentRun.schemaVersion === "visual-hive.agent-issue-run.v1", "issue agent run must use the issue-run schema.");
+  assert(agentRun.mode === "no_write", "default issue agent run must be no-write.");
+  assert(agentRun.status === "completed", "default issue agent run must complete.");
+  assert(agentRun.profile === "test_creator_agent", "first issue should route to the test creator agent.");
+  assert(agentRun.safety?.sourceMutations === 0, "issue agent must not mutate source in default mode.");
+  assert(agentRun.safety?.externalCallsMade === 0, "issue agent must make zero external calls in default mode.");
+  assert(agentRun.safety?.realGithubIssuesCreated === 0, "issue agent must create zero real issues in default mode.");
+  assert(agentRun.budgets?.allowWrite === false, "issue agent default budget must disallow writes.");
+  assert(agentRun.budgets?.allowExternalNetwork === false, "issue agent default budget must disallow external network.");
+  metrics.issueDryRuns += 1;
+}
+
+async function findFirstAgentArtifact(fileName) {
+  const agentsDir = path.join(hiveDir, "agents");
+  const entries = await readdir(agentsDir, { withFileTypes: true });
+  const candidateDir = entries.find((entry) => entry.isDirectory() && entry.name.startsWith("visual-hive-"));
+  assert(candidateDir, "issue agent command must write an agent artifact directory.");
+  const relativePath = path.join("agents", candidateDir.name, fileName);
+  assert(existsSync(path.join(hiveDir, relativePath)), `issue agent command must write ${fileName}.`);
+  return relativePath;
 }
 
 async function verifyAgentTooling() {
