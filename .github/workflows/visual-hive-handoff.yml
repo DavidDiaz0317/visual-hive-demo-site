@@ -43,8 +43,13 @@ jobs:
             const issueKind = process.env.ISSUE_KIND;
             const limit = Number(process.env.ISSUE_LIMIT || "1");
             const resultPath = process.env.RESULT_PATH;
-            const secretPattern = /(client_secret|set-cookie|authorization|bearer|cookie|token|password|secret|key|code)=?[: ]?[^&\s"']+/gi;
-            const sanitizeText = (value) => String(value || "").replace(secretPattern, "$1=[REDACTED]");
+            const authorizationPattern = /\bauthorization\b\s*[:=]\s*(?:bearer\s+)?[^\r\n&"']+/gi;
+            const secretPattern = /\b(client_secret|set-cookie|cookie|token|password|secret|key|code)\b\s*[:=]\s*[^&\s"']+/gi;
+            const bearerPattern = /\bbearer\s+[A-Za-z0-9._~+/=-]+/gi;
+            const sanitizeText = (value) => String(value || "")
+              .replace(authorizationPattern, "authorization=[REDACTED]")
+              .replace(secretPattern, "$1=[REDACTED]")
+              .replace(bearerPattern, "bearer [REDACTED]");
             const sanitizeJson = (value) => JSON.parse(sanitizeText(JSON.stringify(value)));
             const walkArtifacts = (dir) => {
               if (!fs.existsSync(dir)) return [];
@@ -214,8 +219,13 @@ jobs:
             const fs = require("node:fs");
             const path = require("node:path");
             const root = process.env.ARTIFACT_ROOT;
-            const secretPattern = /(client_secret|set-cookie|authorization|bearer|cookie|token|password|secret|key|code)=?[: ]?[^&\s"']+/gi;
-            const sanitizeText = (value) => String(value || "").replace(secretPattern, "$1=[REDACTED]");
+            const authorizationPattern = /\bauthorization\b\s*[:=]\s*(?:bearer\s+)?[^\r\n&"']+/gi;
+            const secretPattern = /\b(client_secret|set-cookie|cookie|token|password|secret|key|code)\b\s*[:=]\s*[^&\s"']+/gi;
+            const bearerPattern = /\bbearer\s+[A-Za-z0-9._~+/=-]+/gi;
+            const sanitizeText = (value) => String(value || "")
+              .replace(authorizationPattern, "authorization=[REDACTED]")
+              .replace(secretPattern, "$1=[REDACTED]")
+              .replace(bearerPattern, "bearer [REDACTED]");
             const walkArtifacts = (dir) => {
               if (!fs.existsSync(dir)) return [];
               return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
