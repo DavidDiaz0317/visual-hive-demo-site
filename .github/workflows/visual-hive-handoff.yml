@@ -29,6 +29,7 @@ jobs:
           path: visual-hive-artifacts
 
       - name: Create or update scoped Visual Hive issue candidate
+        if: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES == 'true' }}
         uses: actions/github-script@v7
         env:
           ARTIFACT_ROOT: visual-hive-artifacts
@@ -211,6 +212,7 @@ jobs:
             });
 
       - name: Create or update sanitized Visual Hive issue
+        if: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES == 'true' }}
         uses: actions/github-script@v7
         env:
           ARTIFACT_ROOT: visual-hive-artifacts
@@ -300,6 +302,8 @@ jobs:
 
       # This trusted workflow consumes uploaded sanitized artifacts only.
       # It intentionally does not checkout or execute pull request code.
+      # Live issue publication is disabled unless VISUAL_HIVE_AUTO_PUBLISH_ISSUES=true
+      # is set as an explicit repository variable in this trusted workflow context.
 
       - name: Upload trusted issue publish result
         if: always()
