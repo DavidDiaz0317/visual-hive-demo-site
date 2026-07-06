@@ -14,6 +14,8 @@
     "vh:build-source": "node scripts/build-visual-hive-source.mjs",
     "vh:doctor": "node scripts/visual-hive-cli.mjs doctor --config visual-hive.config.yaml",
     "vh:analyze": "node scripts/visual-hive-cli.mjs analyze --repo .",
+    "vh:graph:search": "node scripts/visual-hive-cli.mjs graph search login --repo .",
+    "vh:graph:impact": "node scripts/visual-hive-cli.mjs graph impact --repo . --changed-files changed-files.txt",
     "vh:recommend": "node scripts/visual-hive-cli.mjs recommend --repo . --profile complex-app",
     "vh:plan": "node scripts/visual-hive-cli.mjs plan --config visual-hive.config.yaml --mode pr --changed-files changed-files.txt",
     "vh:plan:docs": "node scripts/visual-hive-cli.mjs plan --config visual-hive.config.yaml --mode pr --changed-files changed-files.docs.txt --output .visual-hive/plan-docs.json",

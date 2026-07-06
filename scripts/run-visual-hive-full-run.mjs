@@ -22,7 +22,16 @@ const TIMEOUTS = {
 };
 
 const artifactsBySection = {
-  "Setup/repo intelligence": [".visual-hive/repo-map.json", ".visual-hive/repo-context.md", ".visual-hive/recommendations.json"],
+  "Setup/repo intelligence": [
+    ".visual-hive/repo-map.json",
+    ".visual-hive/repo-context.md",
+    ".visual-hive/visual-graph.json",
+    ".visual-hive/visual-graph-summary.md",
+    ".visual-hive/visual-graph-vocab.json",
+    ".visual-hive/visual-graph-unresolved.json",
+    ".visual-hive/visual-impact.json",
+    ".visual-hive/recommendations.json"
+  ],
   Planning: [".visual-hive/plan.json", ".visual-hive/plan.canary.json", ".visual-hive/plan.full.json", ".visual-hive/plans.json"],
   "Clean deterministic run": [".visual-hive/report.json", ".visual-hive/baselines.json"],
   "Seeded defect proof": [
@@ -111,7 +120,7 @@ const artifactsBySection = {
 };
 
 const sections = [
-  section("Setup/repo intelligence", ["build", "typecheck", "vh:doctor", "vh:analyze", "vh:recommend"], verifySetup),
+  section("Setup/repo intelligence", ["build", "typecheck", "vh:doctor", "vh:analyze", "vh:graph:search", "vh:graph:impact", "vh:recommend"], verifySetup),
   section("Planning", ["vh:plan", "vh:plan:canary", "vh:plan:full", "vh:plans"], verifyPlanning),
   section("Clean deterministic run", ["vh:run:seed", "vh:run:ci", "vh:baselines"], verifyCleanRun),
   section("Seeded defect proof", ["vh:defect"], verifySeededDefect, restoreCleanArtifacts),
@@ -245,13 +254,25 @@ async function restoreCleanArtifacts() {
 async function verifySetup() {
   const repoMap = await readJson("repo-map.json");
   const context = await readText("repo-context.md");
+  const graph = await readJson("visual-graph.json");
+  const vocab = await readJson("visual-graph-vocab.json");
+  const unresolved = await readJson("visual-graph-unresolved.json");
+  const impact = await readJson("visual-impact.json");
   assert(repoMap.outputResource, "repo-map.json must include outputResource metadata.");
+  assert(repoMap.visualGraphOutputResources?.graph?.artifactPath === ".visual-hive/visual-graph.json", "repo map must reference the Visual Graph artifact.");
   assert(repoMap.visualMap?.nodes?.length > 0, "repo map visualMap must include nodes.");
   assert(repoMap.visualMap?.edges?.length > 0, "repo map visualMap must include edges.");
   const visualMapText = JSON.stringify(repoMap.visualMap);
   assert(/route|selector|target|contract|screenshot|mutation|coverage/i.test(visualMapText), "repo map must include useful visual QA relations.");
   assert(JSON.stringify(repoMap).includes("findings"), "repo map must include findings/lifecycle evidence.");
   assert(context.includes("Visual Hive Repo Context"), "repo-context.md must be human-readable Visual Hive context.");
+  assert(graph.schemaVersion === "visual-hive.visual-graph.v1", "visual-graph.json must use the production graph schema.");
+  assert(graph.summary?.nodes > 0 && graph.summary?.edges > 0, "Visual Graph must include nodes and edges.");
+  assert(Array.isArray(graph.unresolvedReferences), "Visual Graph must include unresolved reference lifecycle evidence.");
+  assert(vocab.schemaVersion === "visual-hive.visual-graph-vocab.v1" && vocab.entries?.length > 0, "Visual Graph vocabulary must be searchable.");
+  assert(Array.isArray(unresolved.unresolvedReferences), "visual-graph-unresolved.json must include unresolvedReferences.");
+  assert(impact.schemaVersion === "visual-hive.visual-impact.v1", "visual-impact.json must be written.");
+  assert(impact.summary?.affectedNodeCount > 0, "visual impact must identify affected nodes.");
 }
 
 async function verifyPlanning() {

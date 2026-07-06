@@ -48,6 +48,8 @@ Generated `.visual-hive` files are ignored by default. Baselines are seeded loca
 ```bash
 npm run vh:doctor
 npm run vh:analyze
+npm run vh:graph:search
+npm run vh:graph:impact
 npm run vh:recommend
 npm run vh:plan
 npm run vh:run:seed
@@ -66,6 +68,26 @@ npm run vh:artifacts
 ```
 
 Use `npm run vh:cli -- --help` to inspect the resolved Visual Hive CLI.
+
+## Visual Graph And Impact Queries
+
+Visual Hive builds a local Visual Graph for this repo during analysis:
+
+- `.visual-hive/visual-graph.json`
+- `.visual-hive/visual-graph-summary.md`
+- `.visual-hive/visual-graph-vocab.json`
+- `.visual-hive/visual-graph-unresolved.json`
+- `.visual-hive/visual-impact.json`
+
+The graph connects files, components, routes, selectors, targets, contracts, screenshots, baselines, mutation operators, artifacts, issue candidates, agent profiles, and Hive resources. It is the bridge between deterministic QA evidence and issue-driven agents.
+
+```bash
+npm run vh:analyze
+npm run vh:graph:search
+npm run vh:graph:impact
+```
+
+`vh:graph:search` searches the graph vocabulary for terms like `login`. `vh:graph:impact` reads `changed-files.txt` and writes a blast-radius report showing affected routes, contracts, screenshots, mutations, issue candidates, and the validation command to rerun.
 
 ## PR-Safe Checks
 
@@ -140,9 +162,10 @@ npm run vh:agent:issue
 Visual Hive's production route is issue-centric:
 
 1. `vh:issues` turns deterministic findings into stable, deduplicated issue candidates in `.visual-hive/issues.json`, `.visual-hive/issues.md`, and `.visual-hive/issue-queue.json`.
-2. `vh:issues:publish` writes a no-network publish plan and dry-run result. It simulates create/update/block behavior with `networkCallsMade: 0`.
-3. `vh:agent:issue` builds a bounded no-write agent request/output bundle from the first issue candidate. The agent receives evidence, guardrails, and a validation command, but Visual Hive does not repair code.
-4. Trusted workflows may run live issue publishing only after sanitized artifacts and handoff validation pass.
+2. Issue candidates are refreshed into the Visual Graph so Hive and agents can trace each issue back to affected routes, contracts, screenshots, mutations, and artifacts.
+3. `vh:issues:publish` writes a no-network publish plan and dry-run result. It simulates create/update/block behavior with `networkCallsMade: 0`.
+4. `vh:agent:issue` builds a bounded no-write agent request/output bundle from the first issue candidate. The agent receives evidence, graph refs, impact analysis, guardrails, and a validation command, but Visual Hive does not repair code.
+5. Trusted workflows may run live issue publishing only after sanitized artifacts and handoff validation pass.
 
 Real issue creation is only for trusted workflows or explicit guarded live smoke commands that consume sanitized artifacts and do not execute untrusted PR code. The local/default path creates zero real issues.
 
@@ -169,11 +192,12 @@ Without `VISUAL_HIVE_LIVE_GITHUB_ISSUE=true`, this writes `.visual-hive/live-iss
 3. Add stable `data-testid` selectors for route shells, cards, forms, and critical actions.
 4. Add a `localPreview` command target with install/build/serve/url.
 5. Run `doctor`, `analyze`, and `recommend`.
-6. Seed baselines locally with non-CI mode.
-7. Run strict CI mode to verify baselines.
-8. Add mutation operators mapped to important contracts.
-9. Add PR, scheduled, handoff, and full-run workflows with least-privilege permissions.
-10. Enable trusted issue handoff only after artifacts are sanitized and validated.
+6. Inspect `visual-graph-summary.md` and `visual-impact.json` to confirm Visual Hive understands the repo surfaces.
+7. Seed baselines locally with non-CI mode.
+8. Run strict CI mode to verify baselines.
+9. Add mutation operators mapped to important contracts.
+10. Add PR, scheduled, handoff, and full-run workflows with least-privilege permissions.
+11. Enable trusted issue handoff only after artifacts are sanitized and validated.
 
 ## Demo Routes
 
