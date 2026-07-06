@@ -13,6 +13,7 @@ const guardEnabled = process.env.VISUAL_HIVE_LIVE_GITHUB_ISSUE === "true";
 const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY ?? "DavidDiaz0317/visual-hive-demo-site";
 const isPullRequest = Boolean(process.env.GITHUB_HEAD_REF || process.env.GITHUB_EVENT_NAME === "pull_request");
+const commandTimeoutMs = 120_000;
 
 const baseSummary = {
   schemaVersion: "visual-hive.live-issue-smoke.v1",
@@ -64,7 +65,10 @@ if (validation.summary?.externalCallsMade !== 0 || validation.status === "blocke
 }
 
 const issueBody = sanitizeText(await readFile(issuePath, "utf8"));
-const dedupeSignature = issueBody.match(/visual-hive-hive-handoff-dedupe:[^\s<]+/)?.[0] ?? `visual-hive-hive-handoff-dedupe:${repository}`;
+const dedupeSignature =
+  issueBody.match(/visual-hive-hive-handoff-dedupe:[^\s<]+/)?.[0] ??
+  issueBody.match(/Dedupe fingerprint:\s*([^\s<]+)/)?.[1] ??
+  `visual-hive-hive-handoff-dedupe:${repository}`;
 const [owner, repo] = repository.split("/");
 if (!owner || !repo) {
   await writeSummary({ ...baseSummary, status: "blocked", reason: "GITHUB_REPOSITORY must be owner/repo." });
@@ -75,10 +79,12 @@ const existing = await githubJson(`https://api.github.com/repos/${owner}/${repo}
   method: "GET",
   token
 });
-const match = Array.isArray(existing)
-  ? existing.find((issue) => typeof issue.body === "string" && issue.body.includes(dedupeSignature))
-  : undefined;
 const title = `${baseSummary.titlePrefix} ${dedupeSignature.replace("visual-hive-hive-handoff-dedupe:", "")}`;
+const match = Array.isArray(existing)
+  ? existing
+      .filter((issue) => (typeof issue.body === "string" && issue.body.includes(dedupeSignature)) || issue.title === title)
+      .sort((left, right) => Number(left.number ?? 0) - Number(right.number ?? 0))[0]
+  : undefined;
 const body = `${issueBody}
 
 ---
@@ -127,8 +133,16 @@ async function run(command, args) {
       stdio: "inherit",
       shell: process.platform === "win32"
     });
-    child.once("error", reject);
+    const timer = setTimeout(() => {
+      child.kill("SIGTERM");
+      reject(new Error(`${command} ${args.join(" ")} timed out after ${commandTimeoutMs}ms.`));
+    }, commandTimeoutMs);
+    child.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
     child.once("exit", (code) => {
+      clearTimeout(timer);
       if (code === 0) resolve();
       else reject(new Error(`${command} ${args.join(" ")} failed with exit code ${code}.`));
     });
