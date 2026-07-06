@@ -91,6 +91,7 @@ const artifactsBySection = {
     ".visual-hive/issue-publish-plan.json",
     ".visual-hive/issue-publish-dry-run.json",
     ".visual-hive/issue-publish-result.json",
+    ".visual-hive/issue-lifecycle-proof.json",
     ".visual-hive/agents/*/agent-request.md",
     ".visual-hive/agents/*/agent-output.md",
     ".visual-hive/agents/*/agent-run.json"
@@ -127,7 +128,7 @@ const sections = [
     ["vh:handoff", "vh:hive-export", "vh:hive-guarded-preview", "vh:hive-repair-envelope", "vh:hive-repair-consumer", "vh:hive-repair-workflow", "vh:handoff-validate", "vh:hive-modes", "vh:handoff-dry-run"],
     verifyHandoff
   ),
-  section("Issue queue and agent handoff", ["vh:issues", "vh:issues:publish", "vh:agent:issue"], verifyIssueQueue),
+  section("Issue queue and agent handoff", ["vh:issues", "vh:issues:publish", "vh:issues:lifecycle-proof", "vh:agent:issue"], verifyIssueQueue),
   section("Agent packets/tools/MCP/context", ["vh:test-creation", "vh:agent-packet", "vh:agent-packet:handoff", "vh:agent-packet:provider", "vh:tools", "vh:mcp", "vh:context", "vh:schemas"], verifyAgentTooling),
   section("Control Plane and UI", ["vh:snapshot", "vh:artifacts", "vh:control-plane-smoke"], verifyControlPlane),
   section("External repo summary", [], verifySummaryPlaceholder)
@@ -395,6 +396,7 @@ async function verifyIssueQueue() {
   const issues = await readJson("issues.json");
   const queue = await readJson("issue-queue.json");
   const publish = await readJson("issue-publish-result.json");
+  const lifecycle = await readJson("issue-lifecycle-proof.json");
   const agentRun = await readJson(await findFirstAgentArtifact("agent-run.json"));
   const issuesMarkdown = await readText("issues.md");
   assert(issues.schemaVersion === "visual-hive.issues.v1", "issues.json must use the first-class issue schema.");
@@ -407,6 +409,13 @@ async function verifyIssueQueue() {
   assert((publish.externalCallsMade ?? 0) === 0, "issue publish dry-run must make zero external calls.");
   assert((publish.networkCallsMade ?? 0) === 0, "issue publish dry-run must make zero network calls.");
   assert((publish.realGithubIssuesCreated ?? 0) === 0, "issue publish dry-run must create zero real issues.");
+  assert(lifecycle.schemaVersion === "visual-hive.issue-lifecycle-proof.v1", "issue lifecycle proof must use the lifecycle proof schema.");
+  assert(lifecycle.statuses?.initial === "open_candidate", "issue lifecycle proof must prove the open candidate state.");
+  assert(lifecycle.statuses?.suppressed === "suppressed", "issue lifecycle proof must prove the suppression state.");
+  assert(lifecycle.statuses?.resolved === "resolved_candidate", "issue lifecycle proof must prove the resolved candidate state.");
+  assert((lifecycle.externalCallsMade ?? 0) === 0, "issue lifecycle proof must make zero external calls.");
+  assert((lifecycle.networkCallsMade ?? 0) === 0, "issue lifecycle proof must make zero network calls.");
+  assert((lifecycle.realGithubIssuesCreated ?? 0) === 0, "issue lifecycle proof must create zero real issues.");
   assert(agentRun.schemaVersion === "visual-hive.agent-issue-run.v1", "issue agent run must use the issue-run schema.");
   assert(agentRun.mode === "no_write", "default issue agent run must be no-write.");
   assert(agentRun.status === "completed", "default issue agent run must complete.");
