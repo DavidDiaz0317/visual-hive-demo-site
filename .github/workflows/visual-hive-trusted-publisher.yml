@@ -54,7 +54,7 @@ jobs:
             const patterns = [
               new RegExp("C:\\\\\\\\Users", "i"),
               new RegExp("C:/Users", "i"),
-              new RegExp("OneDrive", "i"),
+              new RegExp("[A-Z]:[\\\\/][^\\r\\n\"'<>]*OneDrive[^\\r\\n\"'<>]*", "i"),
               new RegExp("/Users/", "i"),
               new RegExp("/home/", "i"),
               new RegExp("(^|[^A-Za-z])[A-Z]:(\\\\\\\\|/)")

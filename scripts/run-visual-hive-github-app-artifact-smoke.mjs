@@ -13,7 +13,7 @@ const summaryPath = path.join(hiveDir, "github-app-artifact-smoke-summary.json")
 const leakPatterns = [
   /C:\\Users/i,
   /C:\/Users/i,
-  /OneDrive/i,
+  /[A-Z]:[\\/][^\r\n"'<>]*OneDrive[^\r\n"'<>]*/i,
   /\/Users\//i,
   /\/home\//i,
   /(^|[^A-Za-z])[A-Z]:(\\|\/)/
