@@ -38,7 +38,8 @@ const steps = [
   ["github-app-artifact-smoke", ["npm", ["run", "vh:github-app:artifact-smoke"], 180_000]],
   ["mcp", ["npm", ["run", "vh:mcp"], 120_000]],
   ["mcp-smoke", ["npm", ["run", "vh:mcp:smoke"], 180_000]],
-  ["workflows", ["npm", ["run", "vh:workflows"], 120_000]]
+  ["workflows", ["npm", ["run", "vh:workflows"], 120_000]],
+  ["path-scan", ["npm", ["run", "vh:path-scan"], 120_000]]
 ];
 
 await mkdir(hiveRoot, { recursive: true });

@@ -46,6 +46,7 @@
     "vh:llm-decision": "node scripts/visual-hive-cli.mjs llm decision --config visual-hive.config.yaml --decision keep_disabled --reason \"Prompt-only local demo\"",
     "vh:risk": "node scripts/visual-hive-cli.mjs risk --config visual-hive.config.yaml",
     "vh:security": "node scripts/visual-hive-cli.mjs security --config visual-hive.config.yaml",
+    "vh:path-scan": "node scripts/visual-hive-cli.mjs path-scan --config visual-hive.config.yaml",
     "vh:costs": "node scripts/visual-hive-cli.mjs costs --config visual-hive.config.yaml",
     "vh:readiness": "node scripts/visual-hive-cli.mjs readiness --config visual-hive.config.yaml",
     "vh:setup-status": "node scripts/visual-hive-cli.mjs setup-status --config visual-hive.config.yaml",

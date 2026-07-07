@@ -60,6 +60,7 @@ const artifactsBySection = {
     ".visual-hive/provider-upload/argos/manifest.json",
     ".visual-hive/risk.json",
     ".visual-hive/security.json",
+    ".visual-hive/path-leak-scan.json",
     ".visual-hive/costs.json",
     ".visual-hive/readiness.json",
     ".visual-hive/setup-progress.json",
@@ -130,7 +131,7 @@ const sections = [
   section("Coverage and visual-test maintenance", ["vh:coverage", "vh:flows", "vh:improve", "vh:targets", "vh:contracts", "vh:schedules"], verifyCoverage),
   section(
     "Governance/provider/safety",
-    ["vh:workflows", "vh:providers", "vh:provider-plan", "vh:provider-handoff", "vh:provider-upload", "vh:risk", "vh:security", "vh:costs", "vh:readiness", "vh:setup-status", "vh:runbook"],
+    ["vh:workflows", "vh:providers", "vh:provider-plan", "vh:provider-handoff", "vh:provider-upload", "vh:risk", "vh:security", "vh:path-scan", "vh:costs", "vh:readiness", "vh:setup-status", "vh:runbook"],
     verifyGovernance
   ),
   section("Evidence/verdict/triage", ["vh:triage", "vh:llm", "vh:report", "vh:evidence", "vh:layers", "vh:verdict"], verifyEvidence),
@@ -365,6 +366,7 @@ async function verifyGovernance() {
   const providerUpload = await readJson("provider-upload/argos/manifest.json");
   const risk = await readJson("risk.json");
   const security = await readJson("security.json");
+  const pathLeakScan = await readJson("path-leak-scan.json");
   const costs = await readJson("costs.json");
   const readiness = await readJson("readiness.json");
   assert(JSON.stringify(workflows).includes("pull_request"), "workflow audit must include PR workflow evidence.");
@@ -373,8 +375,10 @@ async function verifyGovernance() {
   assert((providers.externalCallsMade ?? 0) === 0, "provider mock/list results must make zero external calls.");
   assert((providerHandoff.externalCallsMade ?? 0) === 0, "provider handoff must make zero external calls.");
   assert((providerUpload.externalCallsMade ?? 0) === 0, "provider upload dry-run must make zero external calls.");
+  assert(pathLeakScan.status === "passed", "issue-facing path leak scan must pass.");
+  assert((pathLeakScan.summary?.findings ?? 0) === 0, "issue-facing path leak scan must report zero findings.");
   assert(risk && security && costs && readiness, "risk/security/cost/readiness artifacts must exist.");
-  assertNoSecretValues([workflows, providers, providerHandoff, providerUpload, risk, security, costs, readiness], "governance artifacts");
+  assertNoSecretValues([workflows, providers, providerHandoff, providerUpload, risk, security, pathLeakScan, costs, readiness], "governance artifacts");
 }
 
 async function verifyEvidence() {

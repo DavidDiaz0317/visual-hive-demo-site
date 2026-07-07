@@ -35,6 +35,7 @@ const suites = {
     step("vh:llm"),
     step("vh:llm-decision"),
     step("vh:security"),
+    step("vh:path-scan"),
     step("vh:costs"),
     step("vh:readiness", DEFAULT_TIMEOUT_MS, true),
     step("vh:setup-status"),
