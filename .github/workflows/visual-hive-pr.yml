@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout demo repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Checkout Visual Hive
         uses: actions/checkout@v4
@@ -49,30 +51,65 @@ jobs:
       - name: Build demo app
         run: npm run build && npm run typecheck
 
+      - name: Capture PR changed files
+        run: |
+          mkdir -p .visual-hive
+          git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > .visual-hive/changed-files.pr.txt
+          if [ ! -s .visual-hive/changed-files.pr.txt ]; then
+            git diff --name-only "origin/${{ github.base_ref }}"...HEAD > .visual-hive/changed-files.pr.txt
+          fi
+          echo "Changed files for Visual Hive planning:"
+          cat .visual-hive/changed-files.pr.txt || true
+
       - name: Visual Hive doctor
         run: npm run vh:doctor
 
-      - name: Visual Hive plan
-        run: npm run vh:plan
+      - name: Visual Hive graph and plan
+        run: |
+          npm run vh:analyze
+          npm run vh:graph:search
+          node scripts/visual-hive-cli.mjs graph impact --repo . --changed-files .visual-hive/changed-files.pr.txt
+          node scripts/visual-hive-cli.mjs plan --config visual-hive.config.yaml --mode pr --changed-files .visual-hive/changed-files.pr.txt
+          node -e 'const fs=require("fs"); const plan=JSON.parse(fs.readFileSync(".visual-hive/plan.json","utf8")); const selected=Array.isArray(plan.items)?plan.items:Array.isArray(plan.selectedContracts)?plan.selectedContracts:[]; const count=selected.length; fs.appendFileSync(process.env.GITHUB_ENV, "VISUAL_HIVE_SELECTED_CONTRACTS="+count+"\n"); console.log("Visual Hive selected "+count+" contract(s).");'
 
       - name: Seed deterministic baselines
+        if: env.VISUAL_HIVE_SELECTED_CONTRACTS != '0'
         run: npm run vh:run:seed
 
       - name: Verify deterministic contracts
+        if: env.VISUAL_HIVE_SELECTED_CONTRACTS != '0'
         run: npm run vh:run:ci
 
       - name: Triage and evidence
         if: always()
         # Writes .visual-hive/baselines.json before artifact upload.
         run: |
-          node scripts/visual-hive-cli.mjs baselines list --config visual-hive.config.yaml --write
-          npm run vh:triage
-          npm run vh:evidence
+          if [ "${VISUAL_HIVE_SELECTED_CONTRACTS}" != "0" ]; then
+            node scripts/visual-hive-cli.mjs baselines list --config visual-hive.config.yaml --write
+            npm run vh:triage
+            npm run vh:evidence
+          else
+            echo "No Visual Hive contracts selected for this PR; writing planning-only artifacts."
+          fi
           npm run vh:issues
-          npm run vh:handoff
+          if [ "${VISUAL_HIVE_SELECTED_CONTRACTS}" != "0" ]; then
+            npm run vh:handoff
+            npm run vh:test-creation
+            npm run vh:agent-packet
+          else
+            echo "Skipping handoff and agent packet because no deterministic evidence packet was generated."
+          fi
           npm run vh:mcp
           npm run vh:artifacts
-          npm run vh:report -- --github-step-summary
+          if [ "${VISUAL_HIVE_SELECTED_CONTRACTS}" != "0" ]; then
+            npm run vh:report -- --github-step-summary
+          else
+            {
+              echo "## Visual Hive Summary"
+              echo ""
+              echo "No Visual Hive contracts were selected for this PR. Planning, graph, issue, MCP, and artifact-index evidence were uploaded for review."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload Visual Hive artifacts
         if: always()
