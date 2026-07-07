@@ -99,6 +99,8 @@ npm run vh:graph:impact
 
 The PR workflow runs with `contents: read`, no secrets, and no `pull_request_target`. It builds Visual Hive from `DavidDiaz0317/visual-hive@main`, runs local deterministic checks, writes evidence, issue candidates, MCP, and handoff artifacts, and uploads `.visual-hive`.
 
+Workflow actions are pinned to commit SHAs with version comments so the repo does not silently consume a changed action tag. Update those SHAs intentionally when upgrading the workflow toolchain.
+
 Run the PR-safe path locally:
 
 ```bash

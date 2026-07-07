@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Download Visual Hive artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
@@ -29,7 +29,7 @@ jobs:
           path: visual-hive-artifacts
 
       - name: Validate sanitized artifacts
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           ARTIFACT_ROOT: visual-hive-artifacts
         with:
@@ -86,7 +86,7 @@ jobs:
 
       - name: Create or update one scoped Visual Hive issue
         if: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES == 'true' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           ARTIFACT_ROOT: visual-hive-artifacts
           ISSUE_KIND: missing_visual_coverage
