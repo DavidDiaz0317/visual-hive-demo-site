@@ -21,15 +21,19 @@ const steps = [
   ["run-ci", ["npm", ["run", "vh:run:ci"], 240_000]],
   ["mutate", ["npm", ["run", "vh:mutate"], 360_000]],
   ["mutation-proof", ["npm", ["run", "vh:mutation-proof"], 120_000]],
+  ["triage", ["npm", ["run", "vh:triage"], 120_000]],
   ["evidence", ["npm", ["run", "vh:evidence"], 120_000]],
   ["issues", ["npm", ["run", "vh:issues"], 120_000]],
   ["issue-publish-dry-run", ["npm", ["run", "vh:issues:publish"], 120_000]],
   ["handoff", ["npm", ["run", "vh:handoff"], 120_000]],
   ["handoff-validate", ["npm", ["run", "vh:handoff-validate"], 120_000]],
-  ["mcp", ["npm", ["run", "vh:mcp"], 120_000]],
-  ["mcp-smoke", ["npm", ["run", "vh:mcp:smoke"], 180_000]],
+  ["hive-export", ["npm", ["run", "vh:hive-export"], 120_000]],
+  ["test-creation", ["npm", ["run", "vh:test-creation"], 120_000]],
+  ["agent-packet", ["npm", ["run", "vh:agent-packet"], 120_000]],
   ["agent-issue", ["npm", ["run", "vh:agent:issue"], 180_000]],
   ["artifacts", ["npm", ["run", "vh:artifacts"], 120_000]],
+  ["mcp", ["npm", ["run", "vh:mcp"], 120_000]],
+  ["mcp-smoke", ["npm", ["run", "vh:mcp:smoke"], 180_000]],
   ["workflows", ["npm", ["run", "vh:workflows"], 120_000]]
 ];
 
