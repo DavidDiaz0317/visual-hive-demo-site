@@ -31,6 +31,7 @@ const steps = [
   ["test-creation", ["npm", ["run", "vh:test-creation"], 120_000]],
   ["agent-packet", ["npm", ["run", "vh:agent-packet"], 120_000]],
   ["agent-issue", ["npm", ["run", "vh:agent:issue"], 180_000]],
+  ["snapshot", ["npm", ["run", "vh:snapshot"], 120_000]],
   ["artifacts", ["npm", ["run", "vh:artifacts"], 120_000]],
   ["mcp", ["npm", ["run", "vh:mcp"], 120_000]],
   ["mcp-smoke", ["npm", ["run", "vh:mcp:smoke"], 180_000]],
