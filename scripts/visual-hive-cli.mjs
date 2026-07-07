@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import { access } from "node:fs/promises";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
+const execFileAsync = promisify(execFile);
 
 const resolution = await resolveVisualHiveCli();
 
@@ -42,15 +44,19 @@ async function resolveVisualHiveCli() {
     return buildInvocation(path.resolve(repoRoot, override), "VISUAL_HIVE_CLI");
   }
 
-  const candidates = [
+  const siblingCandidates = [
     {
       source: "sibling visual-hive checkout",
+      checkoutRoot: path.resolve(repoRoot, "..", "visual-hive"),
       file: path.resolve(repoRoot, "..", "visual-hive", "packages", "cli", "dist", "index.js")
     },
     {
       source: "sibling vis-hive checkout",
+      checkoutRoot: path.resolve(repoRoot, "..", "vis-hive"),
       file: path.resolve(repoRoot, "..", "vis-hive", "packages", "cli", "dist", "index.js")
-    },
+    }
+  ];
+  const installedCandidates = [
     {
       source: "workspace package install",
       file: path.resolve(repoRoot, "node_modules", "@visual-hive", "cli", "dist", "index.js")
@@ -61,10 +67,20 @@ async function resolveVisualHiveCli() {
     }
   ];
 
-  for (const candidate of candidates) {
+  const siblingMatches = [];
+  for (const candidate of siblingCandidates) {
     if (await exists(candidate.file)) {
-      return buildInvocation(candidate.file, candidate.source);
+      siblingMatches.push({ ...candidate, gitCommitTime: await gitCommitTime(candidate.checkoutRoot) });
     }
+  }
+  siblingMatches.sort((a, b) => b.gitCommitTime - a.gitCommitTime);
+  if (siblingMatches[0]) {
+    const selected = siblingMatches[0];
+    return buildInvocation(selected.file, `${selected.source} (${selected.gitCommitTime ? "newest checkout" : "built checkout"})`);
+  }
+
+  for (const candidate of installedCandidates) {
+    if (await exists(candidate.file)) return buildInvocation(candidate.file, candidate.source);
   }
 
   console.error(
@@ -101,5 +117,14 @@ async function exists(file) {
     return true;
   } catch {
     return false;
+  }
+}
+
+async function gitCommitTime(checkoutRoot) {
+  try {
+    const { stdout } = await execFileAsync("git", ["-C", checkoutRoot, "log", "-1", "--format=%ct"], { timeout: 5_000 });
+    return Number.parseInt(stdout.trim(), 10) || 0;
+  } catch {
+    return 0;
   }
 }
