@@ -57,6 +57,7 @@ const suites = {
     step("vh:hive-repair-workflow"),
     step("vh:test-creation"),
     step("vh:agent-packet"),
+    step("vh:agent:write-preview"),
     step("vh:agent-packet:handoff"),
     step("vh:agent-packet:provider"),
     step("vh:tools"),

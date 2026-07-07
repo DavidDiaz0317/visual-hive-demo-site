@@ -31,6 +31,7 @@ const steps = [
   ["test-creation", ["npm", ["run", "vh:test-creation"], 120_000]],
   ["agent-packet", ["npm", ["run", "vh:agent-packet"], 120_000]],
   ["agent-issue", ["npm", ["run", "vh:agent:issue"], 180_000]],
+  ["agent-write-preview", ["npm", ["run", "vh:agent:write-preview"], 120_000]],
   ["snapshot", ["npm", ["run", "vh:snapshot"], 120_000]],
   ["artifacts", ["npm", ["run", "vh:artifacts"], 120_000]],
   ["github-app-artifact-smoke", ["npm", ["run", "vh:github-app:artifact-smoke"], 180_000]],

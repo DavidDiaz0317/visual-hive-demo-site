@@ -63,6 +63,7 @@ npm run vh:handoff-validate
 npm run vh:issues
 npm run vh:issues:publish
 npm run vh:agent:issue
+npm run vh:agent:write-preview
 npm run vh:github-app:artifact-smoke
 npm run vh:mcp
 npm run vh:mcp:smoke
@@ -122,7 +123,7 @@ The production smoke workflow is manual and proves the complete client lane:
 npm run vh:production-smoke
 ```
 
-It runs build, typecheck, doctor, graph, plan, deterministic checks, mutation adequacy, evidence, issue candidates, issue publish dry-run, handoff validation, GitHub App artifact-ingestion smoke, MCP smoke, agent issue context, artifact indexing, and workflow audit.
+It runs build, typecheck, doctor, graph, plan, deterministic checks, mutation adequacy, evidence, issue candidates, issue publish dry-run, handoff validation, GitHub App artifact-ingestion smoke, MCP smoke, agent issue context, guarded write-preview dry-run, artifact indexing, and workflow audit.
 
 ## Seeded Failure Demo
 
@@ -180,6 +181,7 @@ npm run vh:issues:publish
 npm run vh:handoff
 npm run vh:handoff-dry-run
 npm run vh:agent:issue
+npm run vh:agent:write-preview
 npm run vh:github-app:artifact-smoke
 ```
 
@@ -189,7 +191,8 @@ Visual Hive's production route is issue-centric:
 2. Issue candidates are refreshed into the Visual Graph so Hive and agents can trace each issue back to affected routes, contracts, screenshots, mutations, and artifacts.
 3. `vh:issues:publish` writes a no-network publish plan and dry-run result. It simulates create/update/block behavior with `networkCallsMade: 0`.
 4. `vh:agent:issue` builds a bounded no-write agent request/output bundle from the first issue candidate. The agent receives evidence, graph refs, impact analysis, guardrails, and a validation command, but Visual Hive does not repair code.
-5. Trusted workflows may run live issue publishing only after sanitized artifacts and handoff validation pass.
+5. `vh:agent:write-preview` proves the guarded branch flow in dry-run mode. By default it plans a deterministic branch name and records zero branches, commits, pushes, PRs, and real issues.
+6. Trusted workflows may run live issue publishing only after sanitized artifacts and handoff validation pass.
 
 Real issue creation is only for trusted workflows or explicit guarded live smoke commands that consume sanitized artifacts and do not execute untrusted PR code. The local/default path creates zero real issues.
 
