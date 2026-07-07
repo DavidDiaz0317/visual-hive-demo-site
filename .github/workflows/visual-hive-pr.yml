@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: codex/control-plane-guided-cockpit
+          ref: main
           path: visual-hive-tooling
 
       - name: Setup Node
@@ -59,7 +59,15 @@ jobs:
       - name: Triage and evidence
         if: always()
         # Writes .visual-hive/baselines.json before artifact upload.
-        run: node scripts/visual-hive-cli.mjs baselines list --config visual-hive.config.yaml --write && npm run vh:triage && npm run vh:evidence && npm run vh:handoff && npm run vh:artifacts && npm run vh:report -- --github-step-summary
+        run: |
+          node scripts/visual-hive-cli.mjs baselines list --config visual-hive.config.yaml --write
+          npm run vh:triage
+          npm run vh:evidence
+          npm run vh:issues
+          npm run vh:handoff
+          npm run vh:mcp
+          npm run vh:artifacts
+          npm run vh:report -- --github-step-summary
 
       - name: Upload Visual Hive artifacts
         if: always()

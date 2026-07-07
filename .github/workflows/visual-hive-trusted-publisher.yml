@@ -1,0 +1,148 @@
+name: Visual Hive Trusted Publisher
+
+on:
+  workflow_run:
+    workflows:
+      - Visual Hive PR
+      - Visual Hive Scheduled
+      - Visual Hive Production Smoke
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  trusted-publisher:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download Visual Hive artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: visual-hive-*
+          merge-multiple: true
+          path: visual-hive-artifacts
+
+      - name: Validate sanitized artifacts
+        uses: actions/github-script@v7
+        env:
+          ARTIFACT_ROOT: visual-hive-artifacts
+        with:
+          script: |
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const root = process.env.ARTIFACT_ROOT;
+            const leaks = [];
+            const important = new Set([
+              "issues.json",
+              "issue-queue.json",
+              "issue-publish-dry-run.json",
+              "hive-issue.md",
+              "handoff.json",
+              "hive-handoff-validation.json",
+              "agent-request.md",
+              "agent-output.md",
+              "agent-run.json",
+              "artifacts-index.json",
+              "mcp-manifest.json"
+            ]);
+            const patterns = [/C:\\\\Users/i, /C:\\/Users/i, /OneDrive/i, /\/Users\//, /\/home\//, /[A-Z]:\\\\/i];
+            function walk(dir) {
+              if (!fs.existsSync(dir)) return [];
+              return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+                const full = path.join(dir, entry.name);
+                return entry.isDirectory() ? walk(full) : [full];
+              });
+            }
+            for (const file of walk(root)) {
+              if (!important.has(path.basename(file))) continue;
+              const text = fs.readFileSync(file, "utf8");
+              for (const pattern of patterns) {
+                if (pattern.test(text)) leaks.push(`${file}: ${pattern}`);
+              }
+            }
+            if (leaks.length) {
+              core.setFailed(`Refusing trusted publish because artifact path leaks were found:\n${leaks.join("\n")}`);
+            } else {
+              core.info("Trusted publisher artifact path scan passed.");
+            }
+
+      - name: Dry-run summary
+        if: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES != 'true' }}
+        run: |
+          echo "Trusted publisher dry-run only. Set repository variable VISUAL_HIVE_AUTO_PUBLISH_ISSUES=true to enable live scoped publishing."
+
+      - name: Create or update one scoped Visual Hive issue
+        if: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES == 'true' }}
+        uses: actions/github-script@v7
+        env:
+          ARTIFACT_ROOT: visual-hive-artifacts
+          ISSUE_KIND: missing_visual_coverage
+          ISSUE_LIMIT: "1"
+        with:
+          script: |
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const root = process.env.ARTIFACT_ROOT;
+            const issueKind = process.env.ISSUE_KIND;
+            const limit = Number(process.env.ISSUE_LIMIT || "1");
+            const sanitizeText = (value) => String(value || "")
+              .replace(/\bauthorization\b\s*[:=]\s*(?:bearer\s+)?[^\r\n&"']+/gi, "authorization=[REDACTED]")
+              .replace(/\b(client_secret|set-cookie|cookie|token|password|secret|key|code)\b\s*[:=]\s*[^&\s"']+/gi, "$1=[REDACTED]")
+              .replace(/\bbearer\s+[A-Za-z0-9._~+/=-]+/gi, "bearer [REDACTED]");
+            function walk(dir) {
+              if (!fs.existsSync(dir)) return [];
+              return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+                const full = path.join(dir, entry.name);
+                return entry.isDirectory() ? walk(full) : [full];
+              });
+            }
+            const issuesPath = walk(root).find((file) => path.basename(file) === "issues.json");
+            const validationPath = walk(root).find((file) => path.basename(file) === "hive-handoff-validation.json");
+            if (!issuesPath || !validationPath) {
+              core.info("Required issue or validation artifact missing; nothing published.");
+              return;
+            }
+            const validation = JSON.parse(fs.readFileSync(validationPath, "utf8"));
+            if (validation.status === "blocked" || validation.summary?.externalCallsMade !== 0) {
+              core.setFailed("Refusing live publish because handoff validation is blocked or reports prior external calls.");
+              return;
+            }
+            const report = JSON.parse(fs.readFileSync(issuesPath, "utf8"));
+            if (report.externalCallsMade !== 0 || report.networkCallsMade !== 0) {
+              core.setFailed("Refusing live publish because issues artifact was not generated by a no-network Visual Hive run.");
+              return;
+            }
+            const candidates = (report.issues || [])
+              .filter((issue) => issue.status === "open_candidate" || issue.status === "update_candidate")
+              .filter((issue) => !issueKind || issue.issueKind === issueKind)
+              .slice(0, Math.max(0, limit));
+            if (!candidates.length) {
+              core.info("No matching Visual Hive issue candidates.");
+              return;
+            }
+            const { owner, repo } = context.repo;
+            const existing = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              labels: "visual-hive",
+              state: "open",
+              per_page: 100
+            });
+            for (const candidate of candidates) {
+              const body = sanitizeText(candidate.body);
+              const labels = Array.from(new Set([...(candidate.labels || []), "visual-hive"]));
+              const match = existing.find((issue) => issue.body && issue.body.includes(candidate.dedupeFingerprint));
+              if (match) {
+                await github.rest.issues.update({ owner, repo, issue_number: match.number, title: candidate.title, body, labels });
+                core.info(`Updated Visual Hive issue #${match.number}`);
+              } else {
+                const created = await github.rest.issues.create({ owner, repo, title: candidate.title, body, labels });
+                core.info(`Created Visual Hive issue #${created.data.number}`);
+              }
+            }

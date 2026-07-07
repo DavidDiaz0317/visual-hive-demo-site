@@ -94,7 +94,11 @@
     "vh:defect:run": "node scripts/visual-hive-cli.mjs run --config visual-hive.defect.config.yaml --plan .visual-hive/plan.defect.json --ci --skip-install --skip-build",
     "vh:defect": "node scripts/run-visual-hive-defect.mjs",
     "vh:full-run": "node scripts/run-visual-hive-full-run.mjs",
-    "vh:live-issue-smoke": "node scripts/run-visual-hive-live-issue-smoke.mjs"
+    "vh:live-issue-smoke": "node scripts/run-visual-hive-live-issue-smoke.mjs",
+    "vh:mcp:smoke": "node scripts/check-visual-hive-mcp-smoke.mjs",
+    "vh:trusted-publish:dry-run": "npm run vh:issues:publish && npm run vh:handoff-validate",
+    "vh:trusted-publish:live-smoke": "node scripts/run-visual-hive-live-issue-smoke.mjs",
+    "vh:production-smoke": "node scripts/run-visual-hive-production-smoke.mjs"
   },
   "dependencies": {
     "@playwright/test": "^1.49.1",

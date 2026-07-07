@@ -63,6 +63,9 @@ npm run vh:handoff-validate
 npm run vh:issues
 npm run vh:issues:publish
 npm run vh:agent:issue
+npm run vh:mcp
+npm run vh:mcp:smoke
+npm run vh:production-smoke
 npm run vh:snapshot
 npm run vh:artifacts
 ```
@@ -91,7 +94,7 @@ npm run vh:graph:impact
 
 ## PR-Safe Checks
 
-The PR workflow runs with `contents: read`, no secrets, and no `pull_request_target`. It builds Visual Hive from `DavidDiaz0317/visual-hive`, runs local deterministic checks, writes evidence artifacts, and uploads `.visual-hive`.
+The PR workflow runs with `contents: read`, no secrets, and no `pull_request_target`. It builds Visual Hive from `DavidDiaz0317/visual-hive@main`, runs local deterministic checks, writes evidence, issue candidates, MCP, and handoff artifacts, and uploads `.visual-hive`.
 
 Run the PR-safe path locally:
 
@@ -102,13 +105,23 @@ npm run vh:run:seed
 npm run vh:run:ci
 npm run vh:triage
 npm run vh:evidence
+npm run vh:issues
 npm run vh:handoff
+npm run vh:mcp
 npm run vh:artifacts
 ```
 
 ## Scheduled And Deep Checks
 
 Scheduled/manual workflows add mutation adequacy, provider dry-run planning, handoff validation, test-creation planning, and Control Plane snapshots. Provider uploads, Hive API calls, and live issue creation remain disabled unless a trusted workflow explicitly enables them.
+
+The production smoke workflow is manual and proves the complete client lane:
+
+```bash
+npm run vh:production-smoke
+```
+
+It runs build, typecheck, doctor, graph, plan, deterministic checks, mutation adequacy, evidence, issue candidates, issue publish dry-run, handoff validation, MCP smoke, agent issue context, artifact indexing, and workflow audit.
 
 ## Seeded Failure Demo
 
@@ -149,6 +162,15 @@ npm run vh:control-plane-smoke
 
 The snapshot is a local artifact consumed by the Visual Hive Control Plane. It includes deterministic status, report evidence, mutation evidence, Evidence Packet, handoff readiness, runbook commands, artifact links, and the safety boundary that Visual Hive validates and routes issues but does not repair code.
 
+## MCP
+
+```bash
+npm run vh:mcp
+npm run vh:mcp:smoke
+```
+
+`vh:mcp` writes `.visual-hive/mcp-manifest.json`. `vh:mcp:smoke` calls the product MCP smoke harness through the resolved Visual Hive CLI and verifies real resources/tools over this repo's generated artifacts. MCP is read-only by default and does not run tests, mutate source, publish issues, upload providers, call Hive, or call LLMs.
+
 ## Issue Handoff
 
 ```bash
@@ -168,6 +190,8 @@ Visual Hive's production route is issue-centric:
 5. Trusted workflows may run live issue publishing only after sanitized artifacts and handoff validation pass.
 
 Real issue creation is only for trusted workflows or explicit guarded live smoke commands that consume sanitized artifacts and do not execute untrusted PR code. The local/default path creates zero real issues.
+
+The dedicated trusted publisher workflow is `.github/workflows/visual-hive-trusted-publisher.yml`. It runs from `workflow_run`, downloads uploaded artifacts, scans issue-facing artifacts for local path leaks, and only performs live issue writes when `VISUAL_HIVE_AUTO_PUBLISH_ISSUES=true` is configured in a trusted repository context.
 
 Guarded live issue publishing for first-class issue candidates is available, but blocked unless explicitly enabled:
 
