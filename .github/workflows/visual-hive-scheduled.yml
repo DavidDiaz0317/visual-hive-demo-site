@@ -45,6 +45,9 @@ jobs:
         run: |
           # Writes .visual-hive/baselines.json before artifact upload.
           npm run vh:doctor
+          npm run vh:analyze
+          npm run vh:graph:search
+          npm run vh:graph:impact
           npm run vh:plan
           npm run vh:run:seed
           npm run vh:run:ci
@@ -54,15 +57,18 @@ jobs:
           npm run vh:provider-upload
           npm run vh:triage
           npm run vh:evidence
+          npm run vh:issues
+          npm run vh:issues:publish
           npm run vh:handoff
           npm run vh:hive-export
           npm run vh:handoff-validate
+          npm run vh:test-creation
+          npm run vh:agent-packet
+          npm run vh:artifacts
           npm run vh:mcp
           npm run vh:mcp:smoke
           npm run vh:agent:issue
-          npm run vh:test-creation
           npm run vh:snapshot
-          npm run vh:artifacts
           npm run vh:report -- --github-step-summary
 
       - name: Upload Visual Hive artifacts
