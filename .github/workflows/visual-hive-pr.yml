@@ -10,7 +10,7 @@ jobs:
   visual-hive:
     runs-on: ubuntu-latest
     env:
-      VISUAL_HIVE_CLI: ${{ github.workspace }}/visual-hive-tooling/packages/cli/dist/index.js
+      VISUAL_HIVE_CLI: ${{ github.workspace }}/.visual-hive-tooling/packages/cli/dist/index.js
     steps:
       - name: Checkout demo repo
         uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
         with:
           repository: DavidDiaz0317/visual-hive
           ref: main
-          path: visual-hive-tooling
+          path: .visual-hive-tooling
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -29,10 +29,10 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            visual-hive-tooling/package-lock.json
+            .visual-hive-tooling/package-lock.json
 
       - name: Install and build Visual Hive
-        working-directory: visual-hive-tooling
+        working-directory: .visual-hive-tooling
         run: npm ci && npm run build
 
       - name: Install demo app
