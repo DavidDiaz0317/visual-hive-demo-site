@@ -44,31 +44,22 @@ jobs:
       - name: Run scheduled Visual Hive evidence chain
         run: |
           # Writes .visual-hive/baselines.json before artifact upload.
-          npm run vh:doctor
-          npm run vh:analyze
+          npm run vh:full-run
           npm run vh:graph:search
           npm run vh:graph:impact
-          npm run vh:plan
-          npm run vh:run:seed
-          npm run vh:run:ci
           node scripts/visual-hive-cli.mjs baselines list --config visual-hive.config.yaml --write
           npm run vh:mutate
+          npm run vh:mutation-proof
           npm run vh:coverage
           npm run vh:provider-upload
-          npm run vh:triage
-          npm run vh:evidence
           npm run vh:issues
           npm run vh:issues:publish
-          npm run vh:handoff
-          npm run vh:hive-export
           npm run vh:handoff-validate
-          npm run vh:test-creation
-          npm run vh:agent-packet
-          npm run vh:artifacts
           npm run vh:github-app:artifact-smoke
-          npm run vh:mcp
           npm run vh:mcp:smoke
           npm run vh:agent:issue
+          npm run vh:agent:validate
+          npm run vh:agent:write-preview
           npm run vh:snapshot
           npm run vh:report -- --github-step-summary
 

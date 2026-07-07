@@ -116,7 +116,7 @@ npm run vh:artifacts
 
 ## Scheduled And Deep Checks
 
-Scheduled/manual workflows add mutation adequacy, provider dry-run planning, handoff validation, test-creation planning, and Control Plane snapshots. Provider uploads, Hive API calls, and live issue creation remain disabled unless a trusted workflow explicitly enables them.
+Scheduled/manual workflows run `npm run vh:full-run` first, then repeat key deep-lane checks for mutation adequacy, provider dry-run planning, handoff validation, GitHub App artifact ingestion, MCP smoke, issue-agent output, guarded write-preview, and Control Plane snapshots. Provider uploads, Hive API calls, and live issue creation remain disabled unless a trusted workflow explicitly enables them.
 
 The production smoke workflow is manual and proves the complete client lane:
 
