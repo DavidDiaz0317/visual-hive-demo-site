@@ -51,7 +51,14 @@ jobs:
               "artifacts-index.json",
               "mcp-manifest.json"
             ]);
-            const patterns = [/C:\\\\Users/i, /C:\\/Users/i, /OneDrive/i, /\/Users\//, /\/home\//, /[A-Z]:\\\\/i];
+            const patterns = [
+              new RegExp("C:\\\\\\\\Users", "i"),
+              new RegExp("C:/Users", "i"),
+              new RegExp("OneDrive", "i"),
+              new RegExp("/Users/", "i"),
+              new RegExp("/home/", "i"),
+              new RegExp("[A-Z]:\\\\\\\\", "i")
+            ];
             function walk(dir) {
               if (!fs.existsSync(dir)) return [];
               return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
