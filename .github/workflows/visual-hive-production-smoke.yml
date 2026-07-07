@@ -47,6 +47,9 @@ jobs:
       - name: Run Visual Hive production smoke
         run: npm run vh:production-smoke
 
+      - name: Prove GitHub App artifact ingestion
+        run: npm run vh:github-app:artifact-smoke
+
       - name: Generate baseline review and step summary
         if: always()
         run: |

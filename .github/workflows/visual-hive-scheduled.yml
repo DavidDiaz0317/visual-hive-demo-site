@@ -65,6 +65,7 @@ jobs:
           npm run vh:test-creation
           npm run vh:agent-packet
           npm run vh:artifacts
+          npm run vh:github-app:artifact-smoke
           npm run vh:mcp
           npm run vh:mcp:smoke
           npm run vh:agent:issue

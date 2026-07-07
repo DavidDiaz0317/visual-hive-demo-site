@@ -63,6 +63,7 @@ npm run vh:handoff-validate
 npm run vh:issues
 npm run vh:issues:publish
 npm run vh:agent:issue
+npm run vh:github-app:artifact-smoke
 npm run vh:mcp
 npm run vh:mcp:smoke
 npm run vh:production-smoke
@@ -121,7 +122,7 @@ The production smoke workflow is manual and proves the complete client lane:
 npm run vh:production-smoke
 ```
 
-It runs build, typecheck, doctor, graph, plan, deterministic checks, mutation adequacy, evidence, issue candidates, issue publish dry-run, handoff validation, MCP smoke, agent issue context, artifact indexing, and workflow audit.
+It runs build, typecheck, doctor, graph, plan, deterministic checks, mutation adequacy, evidence, issue candidates, issue publish dry-run, handoff validation, GitHub App artifact-ingestion smoke, MCP smoke, agent issue context, artifact indexing, and workflow audit.
 
 ## Seeded Failure Demo
 
@@ -179,6 +180,7 @@ npm run vh:issues:publish
 npm run vh:handoff
 npm run vh:handoff-dry-run
 npm run vh:agent:issue
+npm run vh:github-app:artifact-smoke
 ```
 
 Visual Hive's production route is issue-centric:
@@ -192,6 +194,8 @@ Visual Hive's production route is issue-centric:
 Real issue creation is only for trusted workflows or explicit guarded live smoke commands that consume sanitized artifacts and do not execute untrusted PR code. The local/default path creates zero real issues.
 
 The dedicated trusted publisher workflow is `.github/workflows/visual-hive-trusted-publisher.yml`. It runs from `workflow_run`, downloads uploaded artifacts, scans issue-facing artifacts for local path leaks, and only performs live issue writes when `VISUAL_HIVE_AUTO_PUBLISH_ISSUES=true` is configured in a trusted repository context.
+
+`vh:github-app:artifact-smoke` proves the same artifact handoff path locally. It derives the built Visual Hive product checkout from `VISUAL_HIVE_CLI`, runs the GitHub App workflow-run mock against this repo's `.visual-hive` directory, writes `.visual-hive/github-app-artifact-smoke/**`, and verifies `externalCallsMade: 0`, `networkCallsMade: 0`, `checkoutPerformed: false`, and `repoCodeExecuted: false`.
 
 Guarded live issue publishing for first-class issue candidates is available, but blocked unless explicitly enabled:
 

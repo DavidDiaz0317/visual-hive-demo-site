@@ -33,6 +33,7 @@ const steps = [
   ["agent-issue", ["npm", ["run", "vh:agent:issue"], 180_000]],
   ["snapshot", ["npm", ["run", "vh:snapshot"], 120_000]],
   ["artifacts", ["npm", ["run", "vh:artifacts"], 120_000]],
+  ["github-app-artifact-smoke", ["npm", ["run", "vh:github-app:artifact-smoke"], 180_000]],
   ["mcp", ["npm", ["run", "vh:mcp"], 120_000]],
   ["mcp-smoke", ["npm", ["run", "vh:mcp:smoke"], 180_000]],
   ["workflows", ["npm", ["run", "vh:workflows"], 120_000]]
@@ -84,7 +85,13 @@ async function readSafetyCounters() {
     sourceMutations: 0,
     repairBranchesOrPrsCreated: 0
   };
-  for (const file of ["external-full-run-summary.json", "issue-publish-dry-run.json", "hive-handoff-result.json", "mcp-smoke.json"]) {
+  for (const file of [
+    "external-full-run-summary.json",
+    "issue-publish-dry-run.json",
+    "hive-handoff-result.json",
+    "github-app-artifact-smoke-summary.json",
+    "mcp-smoke.json"
+  ]) {
     try {
       const data = JSON.parse(await readFile(path.join(hiveRoot, file), "utf8"));
       summary.externalCallsMade += Number(data.externalCallsMade ?? data.metrics?.externalCallsMade ?? data.safety?.externalCallsMade ?? 0);
