@@ -35,6 +35,11 @@ jobs:
         working-directory: .visual-hive-tooling
         run: npm ci && npm run build
 
+      - name: Move Visual Hive tooling outside client scan path
+        run: |
+          mv .visual-hive-tooling "$RUNNER_TEMP/visual-hive-tooling"
+          echo "VISUAL_HIVE_CLI=$RUNNER_TEMP/visual-hive-tooling/packages/cli/dist/index.js" >> "$GITHUB_ENV"
+
       - name: Install demo app
         run: npm ci
 
