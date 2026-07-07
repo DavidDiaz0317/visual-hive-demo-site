@@ -63,6 +63,7 @@
     "vh:issues:publish:live": "node scripts/visual-hive-cli.mjs issues publish --config visual-hive.config.yaml --live --repo DavidDiaz0317/visual-hive-demo-site --token-env GH_TOKEN --kind missing_visual_coverage --limit 1",
     "vh:issues:lifecycle-proof": "node scripts/check-visual-hive-issue-lifecycle.mjs",
     "vh:agent:issue": "node scripts/visual-hive-cli.mjs agent issue-runner --config visual-hive.config.yaml --issue-index 0 --max-runtime-ms 120000 --max-tool-calls 8 --max-prompt-tokens 8000 --execute-agent --agent-command node --agent-arg scripts/local-visual-hive-issue-agent.mjs",
+    "vh:agent:validate": "node scripts/visual-hive-cli.mjs agent validate --config visual-hive.config.yaml",
     "vh:agent:write-preview": "node scripts/visual-hive-cli.mjs agent write-preview --config visual-hive.config.yaml --issue-index 0",
     "vh:hive-export": "node scripts/visual-hive-cli.mjs hive export --config visual-hive.config.yaml --dry-run --mode measured",
     "vh:hive-modes": "node scripts/visual-hive-cli.mjs hive compare-modes --config visual-hive.config.yaml",

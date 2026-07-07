@@ -101,6 +101,7 @@ const artifactsBySection = {
     ".visual-hive/issue-publish-dry-run.json",
     ".visual-hive/issue-publish-result.json",
     ".visual-hive/issue-lifecycle-proof.json",
+    ".visual-hive/agent-validation.json",
     ".visual-hive/agents/*/agent-request.md",
     ".visual-hive/agents/*/agent-output.md",
     ".visual-hive/agents/*/agent-run.json",
@@ -138,7 +139,7 @@ const sections = [
     ["vh:handoff", "vh:hive-export", "vh:hive-guarded-preview", "vh:hive-repair-envelope", "vh:hive-repair-consumer", "vh:hive-repair-workflow", "vh:handoff-validate", "vh:hive-modes", "vh:handoff-dry-run"],
     verifyHandoff
   ),
-  section("Issue queue and agent handoff", ["vh:issues", "vh:issues:publish", "vh:issues:lifecycle-proof", "vh:agent:issue", "vh:agent:write-preview"], verifyIssueQueue),
+  section("Issue queue and agent handoff", ["vh:issues", "vh:issues:publish", "vh:issues:lifecycle-proof", "vh:agent:issue", "vh:agent:validate", "vh:agent:write-preview"], verifyIssueQueue),
   section("Agent packets/tools/MCP/context", ["vh:test-creation", "vh:agent-packet", "vh:agent-packet:handoff", "vh:agent-packet:provider", "vh:tools", "vh:mcp", "vh:context", "vh:schemas"], verifyAgentTooling),
   section("Control Plane and UI", ["vh:snapshot", "vh:artifacts", "vh:control-plane-smoke"], verifyControlPlane),
   section("External repo summary", [], verifySummaryPlaceholder)
@@ -419,6 +420,7 @@ async function verifyIssueQueue() {
   const queue = await readJson("issue-queue.json");
   const publish = await readJson("issue-publish-result.json");
   const lifecycle = await readJson("issue-lifecycle-proof.json");
+  const validation = await readJson("agent-validation.json");
   const agentRun = await readJson(await findFirstAgentArtifact("agent-run.json"));
   const writePreview = await readJson(await findFirstAgentArtifact("write-preview.json"));
   const issuesMarkdown = await readText("issues.md");
@@ -450,6 +452,10 @@ async function verifyIssueQueue() {
   assert(agentRun.safety?.realGithubIssuesCreated === 0, "issue agent must create zero real issues in default mode.");
   assert(agentRun.budgets?.allowWrite === false, "issue agent default budget must disallow writes.");
   assert(agentRun.budgets?.allowExternalNetwork === false, "issue agent default budget must disallow external network.");
+  assert(validation.schemaVersion === "visual-hive.agent-artifacts-validation.v1", "agent validation must use the validation schema.");
+  assert(validation.status === "passed", "agent validation must pass.");
+  assert(validation.summary?.agentRuns >= 1, "agent validation must inspect at least one run.");
+  assert(validation.summary?.forbiddenActionFailures === 0, "agent validation must report zero forbidden action failures.");
   assert(writePreview.schemaVersion === "visual-hive.agent-write-preview.v1", "write-preview proof must use the write-preview schema.");
   assert(writePreview.mode === "dry_run", "write-preview must default to dry_run mode.");
   assert(writePreview.status === "planned", "write-preview default proof must only plan guarded work.");
