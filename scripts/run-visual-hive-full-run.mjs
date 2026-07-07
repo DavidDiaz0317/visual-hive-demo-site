@@ -371,7 +371,14 @@ async function verifyGovernance() {
   const readiness = await readJson("readiness.json");
   assert(JSON.stringify(workflows).includes("pull_request"), "workflow audit must include PR workflow evidence.");
   assert((workflows.summary?.workflowsUsingPullRequestTarget ?? 0) === 0, "workflow audit must not include pull_request_target execution.");
-  assert(workflows.workflows?.some((workflow) => workflow.kind === "trusted_handoff" && workflow.permissions?.issues === "write"), "workflow audit must identify trusted issue-writing workflow.");
+  assert(
+    workflows.workflows?.some(
+      (workflow) =>
+        (workflow.kind === "trusted_handoff" || workflow.kind === "trusted_issue") &&
+        workflow.permissions?.issues === "write"
+    ),
+    "workflow audit must identify a trusted issue-writing workflow."
+  );
   assert((providers.externalCallsMade ?? 0) === 0, "provider mock/list results must make zero external calls.");
   assert((providerHandoff.externalCallsMade ?? 0) === 0, "provider handoff must make zero external calls.");
   assert((providerUpload.externalCallsMade ?? 0) === 0, "provider upload dry-run must make zero external calls.");
