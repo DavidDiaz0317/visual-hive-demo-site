@@ -50,7 +50,7 @@ jobs:
               return;
             }
             const dedupe = issue.body.match(/visual-hive-issue dedupe:([^ ]+) -->/)?.[1] ?? `issue-${issue_number}`;
-            const short = dedupe.replace(/[^a-zA-Z0-9-]+/g, "-").slice(-32);
+            const short = dedupe.replace(/[^a-zA-Z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(-32) || `issue-${issue_number}`;
             const seed = issue.body.match(/visual-hive-seeded-finding:([^ ]+) -->/)?.[1] ?? "unknown";
             const branch = `visual-hive/repair/${short}`;
             const dir = path.join("docs", "live-loop", "repairs");
@@ -89,7 +89,8 @@ jobs:
           git config user.name "visual-hive-repair-agent"
           git config user.email "visual-hive-repair-agent@users.noreply.github.com"
           git checkout -B "$VISUAL_HIVE_REPAIR_BRANCH"
-          git add "$VISUAL_HIVE_REPAIR_FILE" .visual-hive/repair-agent/repair-plan.json
+          git add "$VISUAL_HIVE_REPAIR_FILE"
+          git add -f .visual-hive/repair-agent/repair-plan.json
           git commit -m "Add Visual Hive repair work order for issue #$VISUAL_HIVE_SOURCE_ISSUE"
           git push --force-with-lease origin "$VISUAL_HIVE_REPAIR_BRANCH"
 
