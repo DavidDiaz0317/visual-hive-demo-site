@@ -31,7 +31,7 @@ const guardrails = [
   "Hive or an agent may act only from this trusted issue or the linked Hive work-order artifacts.",
   "Do not approve baselines blindly.",
   "Do not weaken screenshot thresholds, selector contracts, mutation thresholds, or workflow safety gates to make the issue disappear.",
-  "Open a holdgated repair PR and rerun the listed Visual Hive validation command before marking this issue resolved."
+  "Route this smoke issue to Hive or a human maintainer and rerun the listed Visual Hive validation command before marking this issue resolved."
 ];
 
 const seededFindings = [
@@ -210,7 +210,8 @@ function toIssueCandidate(finding) {
     "visual-hive/live",
     "visual-hive/seeded",
     `visual-hive/${finding.issueKind.replaceAll("_", "-")}`,
-    "visual-hive/ready-for-repair"
+    "visual-hive/ready-for-hive",
+    "visual-hive/smoke"
   ];
   const affected = [
     {
@@ -284,7 +285,7 @@ function renderIssueBody(issue) {
     "",
     `- ${issue.repairHint}`,
     "- Use `.visual-hive/hive/hive-agent-work-orders.json` as the Hive-compatible work-order source.",
-    "- Open a holdgated repair PR; do not push directly to main.",
+    "- Visual Hive does not open repair PRs; Hive or a human maintainer should own any repair branch.",
     "",
     "## Guardrails",
     "",
@@ -360,7 +361,7 @@ function renderWorkOrders(issues) {
       reproductionCommands: [issue.validationCommand],
       acceptanceCriteria: [
         "A holdgated PR links the Visual Hive issue.",
-        "Visual Hive PR validation runs on the repair PR.",
+        "Visual Hive PR validation should run on any Hive- or human-created repair PR.",
         "No baselines are silently approved.",
         "No thresholds or selector contracts are weakened to hide the finding."
       ],

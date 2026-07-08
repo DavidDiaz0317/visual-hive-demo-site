@@ -46,6 +46,10 @@ jobs:
             const { owner, repo } = context.repo;
             const root = process.env.ARTIFACT_ROOT;
             const explicitIssue = process.env.ISSUE_NUMBER ? Number(process.env.ISSUE_NUMBER) : undefined;
+            const redactSecretValues = (value) => String(value || "")
+              .replace(/\bauthorization\b\s*[:=]\s*(?:bearer\s+)?[^\r\n&"']+/gi, "authorization=[REDACTED]")
+              .replace(/\b(client_secret|set-cookie|cookie|token|password|secret|key|code)\b\s*[:=]\s*[^&\s"']+/gi, "$1=[REDACTED]")
+              .replace(/\bbearer\s+[A-Za-z0-9._~+/=-]+/gi, "bearer [REDACTED]");
             const summary = {
               schemaVersion: "visual-hive.issue-lifecycle.workflow.v1",
               generatedAt: new Date().toISOString(),
@@ -69,7 +73,7 @@ jobs:
               const label = status === "resolved_candidate" ? "visual-hive/resolved-candidate" : status === "suppressed" ? "visual-hive/suppressed" : "visual-hive/still-active";
               await github.rest.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: [label] });
               const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: issueNumber, per_page: 100 });
-              const body = `${bodyMarker}\nVisual Hive lifecycle refresh: **${status}**.\n\nVisual Hive does not auto-close issues by default. Rerun the validation command in the issue body before changing lifecycle state.`;
+              const body = redactSecretValues(`${bodyMarker}\nVisual Hive lifecycle refresh: **${status}**.\n\nVisual Hive does not auto-close issues by default. Rerun the validation command in the issue body before changing lifecycle state.`);
               const previous = comments.find((comment) => comment.body && comment.body.includes(bodyMarker));
               if (previous) {
                 await github.rest.issues.updateComment({ owner, repo, comment_id: previous.id, body });
@@ -103,7 +107,7 @@ jobs:
               }
             }
             fs.mkdirSync("visual-hive-lifecycle-summary", { recursive: true });
-            fs.writeFileSync("visual-hive-lifecycle-summary/issue-lifecycle-summary.json", `${JSON.stringify(summary, null, 2)}\n`);
+            fs.writeFileSync("visual-hive-lifecycle-summary/issue-lifecycle-summary.json", `${redactSecretValues(JSON.stringify(summary, null, 2))}\n`);
 
       - name: Upload lifecycle summary
         if: always()

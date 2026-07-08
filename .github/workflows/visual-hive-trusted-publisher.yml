@@ -43,8 +43,6 @@ jobs:
               "issues.json",
               "issues.md",
               "issue-queue.json",
-              "live-seeded-issues.json",
-              "live-seeded-issues.md",
               "hive-issue.md",
               "handoff.json",
               "hive-handoff-validation.json",
@@ -90,7 +88,7 @@ jobs:
           ARTIFACT_ROOT: visual-hive-artifacts
           VISUAL_HIVE_PUBLISH_SCOPE: ready
           VISUAL_HIVE_PUBLISH_LIMIT: "20"
-          VISUAL_HIVE_PUBLISH_KINDS: contract_result,visual_regression,mutation_survivor,missing_visual_coverage,external_repo_onboarding,workflow_safety,weak_visual_test
+          VISUAL_HIVE_PUBLISH_KINDS: visual_regression,selector_contract_failure,screenshot_diff,mutation_survivor,missing_visual_coverage,external_repo_onboarding,workflow_safety,weak_visual_test,stale_baseline,baseline_churn,provider_governance,protected_target_blocked
           VISUAL_HIVE_AUTO_PUBLISH_ISSUES: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES }}
         with:
           script: |
@@ -190,7 +188,7 @@ jobs:
               ]));
               const labels = candidate.status === "resolved_candidate"
                 ? Array.from(new Set([...baseLabels, "visual-hive/resolved-candidate"]))
-                : Array.from(new Set([...baseLabels, "visual-hive/ready-for-repair"]));
+                : Array.from(new Set([...baseLabels, "visual-hive/still-active", "visual-hive/ready-for-hive"]));
               await ensureLabels(labels);
               const body = sanitizeText(candidate.body);
               const match = existing.find((issue) => issue.body && issue.body.includes(dedupe));

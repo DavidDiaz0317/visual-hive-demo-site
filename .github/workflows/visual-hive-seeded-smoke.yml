@@ -1,20 +1,15 @@
-name: Visual Hive Live Detection
+name: Visual Hive Seeded Smoke
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17 */6 * * *"
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
 
 jobs:
-  live-detection:
+  seeded-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
     steps:
       - name: Checkout demo site
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -41,29 +36,18 @@ jobs:
       - name: Install demo dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Build and typecheck demo site
-        run: |
-          npm run build
-          npm run typecheck
-
-      - name: Run live Visual Hive detection
+      - name: Run seeded issue smoke only
         env:
           VISUAL_HIVE_CLI: visual-hive-tooling/packages/cli/dist/index.js
         run: |
-          npm run vh:live-detect
-          npm run vh:mcp
-          npm run vh:mcp:smoke
-          npm run vh:artifacts
+          npm run vh:live-seeded-issues
           npm run vh:path-scan
 
-      - name: Upload Visual Hive live artifacts
+      - name: Upload seeded smoke artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: visual-hive-live-detection
+          name: visual-hive-seeded-smoke
           path: .visual-hive
           if-no-files-found: error
           include-hidden-files: true

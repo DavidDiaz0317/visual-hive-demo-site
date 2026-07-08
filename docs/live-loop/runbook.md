@@ -1,32 +1,57 @@
 # Visual Hive Live Loop Runbook
 
-## Local proof
+## Local Real Loop
 
 ```bash
 npm ci
 npm run build
 npm run typecheck
 npm run vh:live-detect
-npm run vh:live-seeded-issues
-npm run vh:live-issue-loop-smoke -- --verify-only
 ```
 
-`vh:live-issue-loop-smoke` without `--verify-only` runs the whole live chain locally with bounded timeouts.
+`vh:live-detect` now runs the product loop:
 
-## GitHub live detection
+1. analyze the repo
+2. plan checks
+3. seed and verify deterministic baselines
+4. run mutation adequacy
+5. generate evidence, verdict, Hive export, MCP, artifact index, and issue candidates
+6. derive lifecycle evidence
 
-Use the `Visual Hive Live Detection` workflow. It runs on `main`, on a six-hour schedule, and by manual dispatch. It uploads the `.visual-hive` artifact as `visual-hive-live-detection`.
+It does not call seeded findings by default.
 
-## Trusted issue publication
+## Seeded Smoke
 
-`Visual Hive Trusted Publisher` is triggered by trusted Visual Hive workflow completion. It publishes multiple allowed active candidates from `Visual Hive Live Detection`, dedupes by fingerprint, and records created/updated/skipped counts.
+Seeded findings remain available only as a manual plumbing check:
 
-The publisher remains dry-run for PR-origin runs.
+```bash
+npm run vh:live-seeded-issues
+```
 
-## Repair PR path
+The `Visual Hive Seeded Smoke` workflow is manual only and labels its findings with `visual-hive/smoke`. Seeded smoke issues are not the normal live detection lane.
 
-Run `Visual Hive Repair Agent` manually with an issue number, or label a Visual Hive issue with `visual-hive/ready-for-repair`. The workflow creates a holdgated branch and PR, links the issue, and records the Visual Hive validation command. It does not auto-merge.
+## GitHub Live Detection
 
-## Lifecycle update
+Use the `Visual Hive Live Detection` workflow. It runs on `main`, on a six-hour schedule, and by manual dispatch. It uploads `.visual-hive` as `visual-hive-live-detection`.
 
-`Visual Hive Issue Lifecycle` refreshes issue labels/comments from live artifacts. Active findings remain open with `visual-hive/still-active`; resolved candidates are labeled `visual-hive/resolved-candidate` and are not auto-closed.
+## Trusted Issue Publication
+
+`Visual Hive Trusted Publisher` is triggered by trusted Visual Hive workflow completion. It consumes sanitized `issues.json`, publishes all eligible active candidates, dedupes by fingerprint, and records created/updated/skipped counts.
+
+The publisher remains dry-run for PR-origin runs. Active findings get `visual-hive/still-active` and `visual-hive/ready-for-hive`.
+
+## Hive Handoff
+
+`Visual Hive Hive Handoff` runs after trusted publishing and summarizes the bead/work-order packet that Hive should consume. It does not checkout code, call Hive APIs, create branches, or open PRs.
+
+Expected Hive queue:
+
+```text
+GitHub issues labeled visual-hive/ready-for-hive and hive/quality
+```
+
+## Lifecycle Update
+
+`visual-hive loop lifecycle` refreshes local lifecycle evidence. Active findings remain open with `visual-hive/still-active`; resolved candidates are labeled `visual-hive/resolved-candidate` and are not auto-closed unless trusted policy explicitly sets `VISUAL_HIVE_CLOSE_RESOLVED=true`.
+
+Visual Hive validates; Hive repairs.

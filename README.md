@@ -58,6 +58,9 @@ npm run vh:mutate
 npm run vh:triage
 npm run vh:evidence
 npm run vh:verdict
+npm run vh:loop
+npm run vh:loop:derive-issues
+npm run vh:loop:lifecycle
 npm run vh:handoff
 npm run vh:handoff-validate
 npm run vh:issues
@@ -229,7 +232,15 @@ Visual Hive's production route is issue-centric:
 
 Real issue creation is only for trusted workflows or explicit guarded live smoke commands that consume sanitized artifacts and do not execute untrusted PR code. The local/default path creates zero real issues.
 
-The dedicated trusted publisher workflow is `.github/workflows/visual-hive-trusted-publisher.yml`. It runs from `workflow_run`, downloads uploaded artifacts, scans issue-facing artifacts for local path leaks, and only performs live issue writes when `VISUAL_HIVE_AUTO_PUBLISH_ISSUES=true` is configured in a trusted repository context.
+The dedicated trusted publisher workflow is `.github/workflows/visual-hive-trusted-publisher.yml`. It runs from `workflow_run`, downloads uploaded artifacts, scans issue-facing artifacts for local path leaks, and publishes eligible real candidates by dedupe fingerprint only from trusted repository contexts.
+
+The default live lane is:
+
+```bash
+npm run vh:live-detect
+```
+
+It runs `visual-hive loop run`, `visual-hive loop derive-issues`, and `visual-hive loop lifecycle`. Issue candidates come from real reports, mutation survivors, coverage gaps, workflow findings, readiness blockers, and provider governance evidence. Synthetic seeded issues are isolated to the manual `Visual Hive Seeded Smoke` workflow and labeled `visual-hive/smoke`.
 
 `vh:github-app:artifact-smoke` proves the same artifact handoff path locally. It derives the built Visual Hive product checkout from `VISUAL_HIVE_CLI`, runs the GitHub App workflow-run mock against this repo's `.visual-hive` directory, writes `.visual-hive/github-app-artifact-smoke/**`, and verifies `externalCallsMade: 0`, `networkCallsMade: 0`, `checkoutPerformed: false`, and `repoCodeExecuted: false`.
 
@@ -239,7 +250,7 @@ Guarded live issue publishing for first-class issue candidates is available, but
 VISUAL_HIVE_LIVE_GITHUB_ISSUE=true GH_TOKEN=... npm run vh:issues:publish:live
 ```
 
-The live script is intentionally scoped to `--kind missing_visual_coverage --limit 1` so a trusted smoke updates one candidate instead of publishing the whole queue. For production use, prefer an explicit `--dedupe <fingerprint>` once the owning issue candidate is known. Rerunning the live publisher uses the issue dedupe fingerprint to update the same issue instead of creating duplicates.
+Rerunning the live publisher uses the issue dedupe fingerprint to update the same issue instead of creating duplicates. Active issues are labeled `visual-hive/still-active` and `visual-hive/ready-for-hive`; resolved candidates are labeled `visual-hive/resolved-candidate`. Visual Hive does not open repair PRs. Hive should consume the GitHub issues and `.visual-hive/hive/*` bead/work-order artifacts, then create repair PRs under Hive governance.
 
 Optional live issue smoke is disabled by default:
 
