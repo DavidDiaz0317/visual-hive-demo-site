@@ -6,6 +6,7 @@ on:
       - Visual Hive PR
       - Visual Hive Scheduled
       - Visual Hive Production Smoke
+      - Visual Hive Live Detection
     types:
       - completed
 
@@ -40,11 +41,15 @@ jobs:
             const leaks = [];
             const important = new Set([
               "issues.json",
+              "issues.md",
               "issue-queue.json",
-              "issue-publish-dry-run.json",
+              "live-seeded-issues.json",
+              "live-seeded-issues.md",
               "hive-issue.md",
               "handoff.json",
               "hive-handoff-validation.json",
+              "hive-agent-work-orders.json",
+              "repair-work-orders.json",
               "agent-request.md",
               "agent-output.md",
               "agent-run.json",
@@ -79,29 +84,55 @@ jobs:
               core.info("Trusted publisher artifact path scan passed.");
             }
 
-      - name: Dry-run summary
-        if: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES != 'true' }}
-        run: |
-          echo "Trusted publisher dry-run only. Set repository variable VISUAL_HIVE_AUTO_PUBLISH_ISSUES=true to enable live scoped publishing."
-
-      - name: Create or update one scoped Visual Hive issue
-        if: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES == 'true' }}
+      - name: Publish or dry-run Visual Hive issues
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           ARTIFACT_ROOT: visual-hive-artifacts
-          ISSUE_KIND: missing_visual_coverage
-          ISSUE_LIMIT: "1"
+          VISUAL_HIVE_PUBLISH_SCOPE: ready
+          VISUAL_HIVE_PUBLISH_LIMIT: "20"
+          VISUAL_HIVE_PUBLISH_KINDS: contract_result,visual_regression,mutation_survivor,missing_visual_coverage,external_repo_onboarding,workflow_safety,weak_visual_test
+          VISUAL_HIVE_AUTO_PUBLISH_ISSUES: ${{ vars.VISUAL_HIVE_AUTO_PUBLISH_ISSUES }}
         with:
           script: |
             const fs = require("node:fs");
             const path = require("node:path");
             const root = process.env.ARTIFACT_ROOT;
-            const issueKind = process.env.ISSUE_KIND;
-            const limit = Number(process.env.ISSUE_LIMIT || "1");
+            const source = context.payload.workflow_run;
+            const trustedWorkflowNames = new Set(["Visual Hive Live Detection", "Visual Hive Scheduled", "Visual Hive Production Smoke"]);
+            const sourceEvent = source?.event ?? "unknown";
+            const sourceWorkflow = source?.name ?? "unknown";
+            const liveAllowed =
+              sourceWorkflow === "Visual Hive Live Detection" ||
+              (trustedWorkflowNames.has(sourceWorkflow) && process.env.VISUAL_HIVE_AUTO_PUBLISH_ISSUES === "true");
+            const sourceIsPr = sourceEvent === "pull_request";
+            const shouldPublish = liveAllowed && !sourceIsPr && source?.conclusion === "success";
+            const allowedKinds = new Set(String(process.env.VISUAL_HIVE_PUBLISH_KINDS || "").split(",").map((item) => item.trim()).filter(Boolean));
+            const limit = Number(process.env.VISUAL_HIVE_PUBLISH_LIMIT || "20");
+            const summary = {
+              schemaVersion: "visual-hive.trusted-publisher-summary.v1",
+              generatedAt: new Date().toISOString(),
+              sourceWorkflow,
+              sourceEvent,
+              sourceConclusion: source?.conclusion,
+              livePublish: shouldPublish,
+              candidatesRead: 0,
+              candidatesEligible: 0,
+              issuesCreated: 0,
+              issuesUpdated: 0,
+              issuesSkipped: 0,
+              duplicatesAvoided: 0,
+              resolvedCandidatesUpdated: 0,
+              externalCallsMade: shouldPublish ? 1 : 0,
+              dryRunReason: shouldPublish ? undefined : "Live publishing is disabled for this source workflow/event/conclusion."
+            };
             const sanitizeText = (value) => String(value || "")
               .replace(/\bauthorization\b\s*[:=]\s*(?:bearer\s+)?[^\r\n&"']+/gi, "authorization=[REDACTED]")
               .replace(/\b(client_secret|set-cookie|cookie|token|password|secret|key|code)\b\s*[:=]\s*[^&\s"']+/gi, "$1=[REDACTED]")
-              .replace(/\bbearer\s+[A-Za-z0-9._~+/=-]+/gi, "bearer [REDACTED]");
+              .replace(/\bbearer\s+[A-Za-z0-9._~+/=-]+/gi, "bearer [REDACTED]")
+              .replace(/C:\\Users\\[^\r\n"')]+/gi, "[redacted-local-path]")
+              .replace(/C:\/Users\/[^\r\n"')]+/gi, "[redacted-local-path]")
+              .replace(/\/Users\/[^\r\n"')]+/gi, "[redacted-local-path]")
+              .replace(/\/home\/[^\r\n"')]+/gi, "[redacted-local-path]");
             function walk(dir) {
               if (!fs.existsSync(dir)) return [];
               return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -109,47 +140,109 @@ jobs:
                 return entry.isDirectory() ? walk(full) : [full];
               });
             }
-            const issuesPath = walk(root).find((file) => path.basename(file) === "issues.json");
-            const validationPath = walk(root).find((file) => path.basename(file) === "hive-handoff-validation.json");
-            if (!issuesPath || !validationPath) {
-              core.info("Required issue or validation artifact missing; nothing published.");
-              return;
-            }
-            const validation = JSON.parse(fs.readFileSync(validationPath, "utf8"));
-            if (validation.status === "blocked" || validation.summary?.externalCallsMade !== 0) {
-              core.setFailed("Refusing live publish because handoff validation is blocked or reports prior external calls.");
-              return;
+            const allFiles = walk(root);
+            const issuesPath = allFiles.find((file) => path.basename(file) === "issues.json");
+            if (!issuesPath) {
+              core.info("No issues.json artifact found; nothing to publish.");
+              return await writeSummary(summary);
             }
             const report = JSON.parse(fs.readFileSync(issuesPath, "utf8"));
             if (report.externalCallsMade !== 0 || report.networkCallsMade !== 0) {
               core.setFailed("Refusing live publish because issues artifact was not generated by a no-network Visual Hive run.");
               return;
             }
-            const candidates = (report.issues || [])
-              .filter((issue) => issue.status === "open_candidate" || issue.status === "update_candidate")
-              .filter((issue) => !issueKind || issue.issueKind === issueKind)
+            const candidates = Array.isArray(report.issues) ? report.issues : [];
+            summary.candidatesRead = candidates.length;
+            const eligible = candidates
+              .filter((issue) => ["open_candidate", "update_candidate", "resolved_candidate"].includes(issue.status))
+              .filter((issue) => allowedKinds.size === 0 || allowedKinds.has(issue.issueKind))
               .slice(0, Math.max(0, limit));
-            if (!candidates.length) {
-              core.info("No matching Visual Hive issue candidates.");
-              return;
+            summary.candidatesEligible = eligible.length;
+            if (!eligible.length) {
+              core.info("No eligible Visual Hive issue candidates.");
+              return await writeSummary(summary);
+            }
+            if (!shouldPublish) {
+              summary.issuesSkipped = eligible.length;
+              core.info(`Trusted publisher dry-run only for ${sourceWorkflow}/${sourceEvent}.`);
+              return await writeSummary(summary);
             }
             const { owner, repo } = context.repo;
             const existing = await github.paginate(github.rest.issues.listForRepo, {
               owner,
               repo,
               labels: "visual-hive",
-              state: "open",
+              state: "all",
               per_page: 100
             });
-            for (const candidate of candidates) {
+            for (const candidate of eligible) {
+              const dedupe = String(candidate.dedupeFingerprint || "");
+              if (!dedupe) {
+                summary.issuesSkipped += 1;
+                continue;
+              }
+              const baseLabels = Array.from(new Set([
+                ...(candidate.labels || []),
+                "visual-hive",
+                "hive/quality",
+                "visual-hive/live",
+                `visual-hive/${String(candidate.issueKind || "unknown").replaceAll("_", "-")}`
+              ]));
+              const labels = candidate.status === "resolved_candidate"
+                ? Array.from(new Set([...baseLabels, "visual-hive/resolved-candidate"]))
+                : Array.from(new Set([...baseLabels, "visual-hive/ready-for-repair"]));
+              await ensureLabels(labels);
               const body = sanitizeText(candidate.body);
-              const labels = Array.from(new Set([...(candidate.labels || []), "visual-hive"]));
-              const match = existing.find((issue) => issue.body && issue.body.includes(candidate.dedupeFingerprint));
+              const match = existing.find((issue) => issue.body && issue.body.includes(dedupe));
               if (match) {
-                await github.rest.issues.update({ owner, repo, issue_number: match.number, title: candidate.title, body, labels });
+                await github.rest.issues.update({ owner, repo, issue_number: match.number, title: candidate.title, body, labels, state: "open" });
+                summary.issuesUpdated += 1;
+                summary.duplicatesAvoided += 1;
+                if (candidate.status === "resolved_candidate") summary.resolvedCandidatesUpdated += 1;
                 core.info(`Updated Visual Hive issue #${match.number}`);
               } else {
                 const created = await github.rest.issues.create({ owner, repo, title: candidate.title, body, labels });
+                existing.push(created.data);
+                summary.issuesCreated += 1;
                 core.info(`Created Visual Hive issue #${created.data.number}`);
               }
             }
+            await writeSummary(summary);
+            async function ensureLabels(labels) {
+              for (const name of labels.filter(Boolean)) {
+                try {
+                  await github.rest.issues.getLabel({ owner, repo, name });
+                } catch (error) {
+                  if (error.status !== 404) throw error;
+                  await github.rest.issues.createLabel({ owner, repo, name, color: "ededed", description: "Managed by Visual Hive" });
+                }
+              }
+            }
+            async function writeSummary(value) {
+              fs.mkdirSync("visual-hive-publisher-summary", { recursive: true });
+              fs.writeFileSync("visual-hive-publisher-summary/trusted-publisher-summary.json", `${JSON.stringify(value, null, 2)}\n`);
+              await core.summary
+                .addHeading("Visual Hive Trusted Publisher")
+                .addTable([
+                  [{ data: "Metric", header: true }, { data: "Value", header: true }],
+                  ["Source workflow", value.sourceWorkflow],
+                  ["Source event", value.sourceEvent],
+                  ["Live publish", String(value.livePublish)],
+                  ["Candidates read", String(value.candidatesRead)],
+                  ["Candidates eligible", String(value.candidatesEligible)],
+                  ["Issues created", String(value.issuesCreated)],
+                  ["Issues updated", String(value.issuesUpdated)],
+                  ["Duplicates avoided", String(value.duplicatesAvoided)],
+                  ["Resolved candidates updated", String(value.resolvedCandidatesUpdated)]
+                ])
+                .write();
+            }
+
+      - name: Upload trusted publisher summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: visual-hive-trusted-publisher-summary
+          path: visual-hive-publisher-summary
+          if-no-files-found: ignore
+          include-hidden-files: true

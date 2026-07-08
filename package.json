@@ -106,7 +106,12 @@
     "vh:mcp:smoke": "node scripts/check-visual-hive-mcp-smoke.mjs",
     "vh:trusted-publish:dry-run": "npm run vh:issues:publish && npm run vh:handoff-validate",
     "vh:trusted-publish:live-smoke": "node scripts/run-visual-hive-live-issue-smoke.mjs",
-    "vh:production-smoke": "node scripts/run-visual-hive-production-smoke.mjs"
+    "vh:production-smoke": "node scripts/run-visual-hive-production-smoke.mjs",
+    "vh:live-detect": "node scripts/run-visual-hive-live-detect.mjs",
+    "vh:live-seeded-issues": "node scripts/visual-hive-live-seeded-issues.mjs",
+    "vh:live-seeded-issues:write-only": "node scripts/visual-hive-live-seeded-issues.mjs --skip-defect-run",
+    "vh:live-issue-loop-smoke": "node scripts/check-visual-hive-live-issue-loop.mjs",
+    "vh:live-issue-loop-smoke:verify": "node scripts/check-visual-hive-live-issue-loop.mjs --verify-only"
   },
   "dependencies": {
     "@playwright/test": "^1.49.1",

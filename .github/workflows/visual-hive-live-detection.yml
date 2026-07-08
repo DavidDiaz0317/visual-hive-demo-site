@@ -1,0 +1,73 @@
+name: Visual Hive Live Detection
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  live-detection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout demo site
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Checkout Visual Hive
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          repository: DavidDiaz0317/visual-hive
+          ref: main
+          path: visual-hive-tooling
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build Visual Hive
+        run: |
+          npm ci
+          npm run build
+        working-directory: visual-hive-tooling
+
+      - name: Install demo dependencies
+        run: npm ci
+
+      - name: Build and typecheck demo site
+        run: |
+          npm run build
+          npm run typecheck
+
+      - name: Run live Visual Hive detection
+        env:
+          VISUAL_HIVE_CLI: visual-hive-tooling/packages/cli/dist/index.js
+        run: |
+          npm run vh:live-detect
+          npm run vh:live-seeded-issues
+          npm run vh:live-issue-loop-smoke:verify
+          npm run vh:hive-export
+          npm run vh:hive-beads
+          npm run vh:hive-validate
+          npm run vh:mcp
+          npm run vh:mcp:smoke
+          npm run vh:artifacts
+          npm run vh:path-scan
+          npm run vh:live-seeded-issues:write-only
+          npm run vh:live-issue-loop-smoke:verify
+
+      - name: Upload Visual Hive live artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: visual-hive-live-detection
+          path: .visual-hive
+          if-no-files-found: error
+          include-hidden-files: true
