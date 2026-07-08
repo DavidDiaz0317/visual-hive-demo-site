@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const hiveRoot = path.join(repoRoot, ".visual-hive");
 const summaryPath = path.join(hiveRoot, "production-smoke-summary.json");
+const OUTPUT_EXCERPT_MAX = 12_000;
 
 const steps = [
   ["build", ["npm", ["run", "build"], 180_000]],
@@ -49,7 +50,13 @@ for (const [name, [command, args, timeoutMs]] of steps) {
   const stepStartedAt = Date.now();
   console.log(`[production-smoke] ${name}`);
   const result = await run(command, args, timeoutMs);
-  results.push({ name, command: [command, ...args].join(" "), status: result.code === 0 ? "passed" : "failed", durationMs: Date.now() - stepStartedAt });
+  results.push({
+    name,
+    command: [command, ...args].join(" "),
+    status: result.code === 0 ? "passed" : "failed",
+    durationMs: Date.now() - stepStartedAt,
+    ...(result.code === 0 ? {} : { outputExcerpt: result.outputExcerpt })
+  });
   if (result.code !== 0) {
     await writeSummary("FAIL", results, `${name} failed with exit code ${result.code}`);
     process.exit(result.code);
@@ -64,18 +71,26 @@ function run(command, args, timeoutMs) {
   return new Promise((resolve) => {
     const executable = process.platform === "win32" && command === "npm" ? "cmd.exe" : command;
     const finalArgs = process.platform === "win32" && command === "npm" ? ["/d", "/s", "/c", command, ...args] : args;
-    const child = spawn(executable, finalArgs, { cwd: repoRoot, stdio: "inherit", env: process.env });
+    let output = "";
+    const appendOutput = (chunk) => {
+      const text = String(chunk);
+      output = `${output}${text}`.slice(-OUTPUT_EXCERPT_MAX);
+      return text;
+    };
+    const child = spawn(executable, finalArgs, { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"], env: process.env });
+    child.stdout?.on("data", (chunk) => process.stdout.write(appendOutput(chunk)));
+    child.stderr?.on("data", (chunk) => process.stderr.write(appendOutput(chunk)));
     const timer = setTimeout(() => {
       child.kill("SIGTERM");
-      resolve({ code: 124 });
+      resolve({ code: 124, outputExcerpt: output });
     }, timeoutMs);
     child.on("error", () => {
       clearTimeout(timer);
-      resolve({ code: 1 });
+      resolve({ code: 1, outputExcerpt: output });
     });
     child.on("close", (code) => {
       clearTimeout(timer);
-      resolve({ code: code ?? 1 });
+      resolve({ code: code ?? 1, outputExcerpt: output });
     });
   });
 }
