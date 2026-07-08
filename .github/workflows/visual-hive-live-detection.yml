@@ -55,7 +55,6 @@ jobs:
         run: |
           npm run vh:live-detect
           npm run vh:live-seeded-issues
-          npm run vh:live-issue-loop-smoke:verify
           npm run vh:hive-export
           npm run vh:hive-beads
           npm run vh:hive-validate
@@ -64,6 +63,13 @@ jobs:
           npm run vh:artifacts
           npm run vh:path-scan
           npm run vh:live-seeded-issues:write-only
+          npm run vh:hive-export
+          npm run vh:hive-beads
+          npm run vh:hive-validate
+          npm run vh:mcp
+          npm run vh:mcp:smoke
+          npm run vh:artifacts
+          npm run vh:path-scan
           npm run vh:live-issue-loop-smoke:verify
 
       - name: Upload Visual Hive live artifacts

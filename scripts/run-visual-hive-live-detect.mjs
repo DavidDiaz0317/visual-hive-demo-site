@@ -23,7 +23,6 @@ const steps = [
   ["hive-beads", "vh:hive-beads", 120_000],
   ["hive-validate", "vh:hive-validate", 120_000],
   ["mcp", "vh:mcp", 120_000],
-  ["mcp-smoke", "vh:mcp:smoke", 180_000],
   ["artifacts", "vh:artifacts", 120_000],
   ["path-scan", "vh:path-scan", 120_000]
 ];
