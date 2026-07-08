@@ -68,6 +68,11 @@ npm run vh:agent:write-preview
 npm run vh:github-app:artifact-smoke
 npm run vh:mcp
 npm run vh:mcp:smoke
+npm run vh:hive-export
+npm run vh:hive-beads
+npm run vh:hive-validate
+npm run vh:hive-setup-pack
+npm run vh:hive-integration-smoke
 npm run vh:production-smoke
 npm run vh:snapshot
 npm run vh:artifacts
@@ -175,6 +180,27 @@ npm run vh:mcp:smoke
 ```
 
 `vh:mcp` writes `.visual-hive/mcp-manifest.json`. `vh:mcp:smoke` calls the product MCP smoke harness through the resolved Visual Hive CLI and verifies real resources/tools over this repo's generated artifacts. MCP is read-only by default and does not run tests, mutate source, publish issues, upload providers, call Hive, or call LLMs.
+
+## Hive Visual QA Import
+
+```bash
+npm run vh:hive-export
+npm run vh:hive-beads
+npm run vh:hive-validate
+npm run vh:hive-setup-pack
+npm run vh:hive-integration-smoke
+```
+
+These commands prove the intended combined product direction:
+
+1. Visual Hive produces deterministic UI evidence and issue candidates.
+2. `vh:hive-export` packages that evidence into `.visual-hive/hive/hive-export.json`.
+3. `vh:hive-beads` projects issue candidates into Hive-style beads in `.visual-hive/hive/hive-beads.json`.
+4. `vh:hive-validate` checks schema shape, required artifacts, dedupe keys, path sanitization, ACMM policy, and zero external calls.
+5. `vh:hive-setup-pack` writes a safe setup plan for PR, scheduled, and trusted-import workflows.
+6. `vh:hive-integration-smoke` runs the local export/beads/validate/setup-pack chain as one no-network check.
+
+The workflow `.github/workflows/hive-visual-import-smoke.yml` runs this same path on a schedule or manual dispatch. It uploads `.visual-hive` artifacts and intentionally performs no live Hive API calls and no live issue creation.
 
 ## Issue Handoff
 

@@ -1,0 +1,86 @@
+name: Hive Visual Import Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 5 * * 2"
+
+permissions:
+  contents: read
+
+jobs:
+  hive-visual-import-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      VISUAL_HIVE_CLI: ${{ github.workspace }}/.visual-hive-tooling/packages/cli/dist/index.js
+    steps:
+      - name: Checkout demo repo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Checkout Visual Hive
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: DavidDiaz0317/visual-hive
+          ref: main
+          path: .visual-hive-tooling
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            .visual-hive-tooling/package-lock.json
+
+      - name: Install and build Visual Hive
+        working-directory: .visual-hive-tooling
+        run: npm ci && npm run build
+
+      - name: Move Visual Hive tooling outside client scan path
+        run: |
+          mv .visual-hive-tooling "$RUNNER_TEMP/visual-hive-tooling"
+          echo "VISUAL_HIVE_CLI=$RUNNER_TEMP/visual-hive-tooling/packages/cli/dist/index.js" >> "$GITHUB_ENV"
+
+      - name: Install demo app and browsers
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: Generate Visual Hive deterministic evidence
+        run: |
+          npm run build
+          npm run typecheck
+          npm run vh:doctor
+          npm run vh:plan
+          npm run vh:run:seed
+          npm run vh:run:ci
+          npm run vh:mutate
+          npm run vh:triage
+          npm run vh:evidence
+          npm run vh:issues
+          npm run vh:handoff
+
+      - name: Generate Hive import bundle
+        run: |
+          npm run vh:hive-export
+          npm run vh:hive-beads
+          npm run vh:hive-validate
+          npm run vh:hive-setup-pack
+          npm run vh:hive-integration-smoke
+          npm run vh:mcp:smoke
+          npm run vh:agent:issue
+          npm run vh:issues:publish
+          npm run vh:path-scan
+          npm run vh:artifacts
+
+      - name: Upload Visual Hive artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hive-visual-import-smoke
+          path: .visual-hive
+          include-hidden-files: true
+
+      # This workflow intentionally performs no live Hive API calls and no live
+      # issue creation. Trusted issue publishing remains isolated in
+      # visual-hive-trusted-publisher.yml.

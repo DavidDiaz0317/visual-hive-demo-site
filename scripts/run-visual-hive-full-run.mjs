@@ -82,6 +82,15 @@ const artifactsBySection = {
     ".visual-hive/hive-handoff-validation.json",
     ".visual-hive/hive/hive-export.json",
     ".visual-hive/hive/beads.json",
+    ".visual-hive/hive/hive-beads.json",
+    ".visual-hive/hive/hive-beads.md",
+    ".visual-hive/hive/hive-import-manifest.json",
+    ".visual-hive/hive/hive-agent-work-orders.json",
+    ".visual-hive/hive/hive-validation-summary.json",
+    ".visual-hive/hive/hive-setup-pack.json",
+    ".visual-hive/hive/hive-setup-pack.md",
+    ".visual-hive/hive/hive-integration-smoke.json",
+    ".visual-hive/hive/hive-integration-smoke.md",
     ".visual-hive/hive/knowledge-facts.json",
     ".visual-hive/hive/knowledge-graph.json",
     ".visual-hive/hive/wiki-index.json",
@@ -137,7 +146,21 @@ const sections = [
   section("Evidence/verdict/triage", ["vh:triage", "vh:llm", "vh:report", "vh:evidence", "vh:layers", "vh:verdict"], verifyEvidence),
   section(
     "Hive handoff and resource sharing",
-    ["vh:handoff", "vh:hive-export", "vh:hive-guarded-preview", "vh:hive-repair-envelope", "vh:hive-repair-consumer", "vh:hive-repair-workflow", "vh:handoff-validate", "vh:hive-modes", "vh:handoff-dry-run"],
+    [
+      "vh:handoff",
+      "vh:hive-export",
+      "vh:hive-beads",
+      "vh:hive-validate",
+      "vh:hive-setup-pack",
+      "vh:hive-integration-smoke",
+      "vh:hive-guarded-preview",
+      "vh:hive-repair-envelope",
+      "vh:hive-repair-consumer",
+      "vh:hive-repair-workflow",
+      "vh:handoff-validate",
+      "vh:hive-modes",
+      "vh:handoff-dry-run"
+    ],
     verifyHandoff
   ),
   section("Issue queue and agent handoff", ["vh:issues", "vh:issues:publish", "vh:issues:lifecycle-proof", "vh:agent:issue", "vh:agent:validate", "vh:agent:write-preview"], verifyIssueQueue),
@@ -407,11 +430,28 @@ async function verifyHandoff() {
   const result = await readJson("hive-handoff-result.json");
   const validation = await readJson("hive-handoff-validation.json");
   const exportBundle = await readJson("hive/hive-export.json");
+  const hiveBeads = await readJson("hive/hive-beads.json");
+  const hiveImportManifest = await readJson("hive/hive-import-manifest.json");
+  const hiveValidation = await readJson("hive/hive-validation-summary.json");
+  const hiveWorkOrders = await readJson("hive/hive-agent-work-orders.json");
+  const hiveSetupPack = await readJson("hive/hive-setup-pack.json");
+  const hiveSmoke = await readJson("hive/hive-integration-smoke.json");
   const dryRun = await readJson("hive-issue-dry-run.json");
   const issue = await readText("hive-issue.md");
   assert(handoff.externalCallsMade === 0 && result.externalCallsMade === 0, "Hive handoff artifacts must remain no-network.");
   assert(validation.summary?.externalCallsMade === 0, "handoff validation must report zero external calls.");
   assert(exportBundle.externalCallsMade === 0, "Hive export must remain no-network.");
+  const projectedHiveBeads = Array.isArray(hiveBeads) ? hiveBeads : hiveBeads.beads;
+  assert(Array.isArray(projectedHiveBeads) && projectedHiveBeads.length > 0, "Hive beads must project at least one Visual Hive issue candidate.");
+  assert(hiveImportManifest.status === "ready", "Hive import manifest must be ready for Hive import.");
+  assert(hiveImportManifest.safety?.pathSanitizationStatus === "passed", "Hive import manifest must preserve path sanitization evidence.");
+  assert(hiveValidation.status === "passed", "Hive validation summary must pass.");
+  assert(Array.isArray(hiveWorkOrders.workOrders) && hiveWorkOrders.workOrders.length > 0, "Hive agent work orders must be generated.");
+  assert(hiveSetupPack.schemaVersion === "visual-hive.hive-setup-pack.v1", "Hive setup pack must use the setup-pack schema.");
+  assert(Array.isArray(hiveSetupPack.proposedFiles) && hiveSetupPack.proposedFiles.length > 0, "Hive setup pack must include proposed setup files.");
+  assert(Array.isArray(hiveSetupPack.validationCommands) && hiveSetupPack.validationCommands.length > 0, "Hive setup pack must include validation commands.");
+  assert(hiveSmoke.status === "passed", "Hive integration smoke must pass.");
+  assert((hiveSmoke.externalCallsMade ?? 0) === 0, "Hive integration smoke must make zero external calls.");
   assert(dryRun.networkCallsMade === 0, "Issue dry-run must make zero network calls.");
   assert(dryRun.scenarios?.some((scenario) => scenario.name === "no_existing_issue" && scenario.decision === "create"), "issue dry-run must simulate create.");
   assert(dryRun.scenarios?.some((scenario) => scenario.name === "existing_issue_found" && scenario.decision === "update"), "issue dry-run must simulate update.");
