@@ -19,6 +19,7 @@ const steps = [
   ["evidence", "vh:evidence", 120_000],
   ["issues", "vh:issues", 120_000],
   ["handoff", "vh:handoff", 120_000],
+  ["agent-packet", "vh:agent-packet", 120_000],
   ["hive-export", "vh:hive-export", 120_000],
   ["hive-beads", "vh:hive-beads", 120_000],
   ["hive-validate", "vh:hive-validate", 120_000],
