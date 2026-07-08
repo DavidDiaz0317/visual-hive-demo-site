@@ -1,0 +1,10 @@
+{
+  "issueNumber": 9,
+  "dedupe": "visual-hive:contract_result:live-seeded-force-login-on-demo",
+  "seed": "force-login-on-demo",
+  "branch": "visual-hive/repair/live-seeded-force-login-on-demo",
+  "file": "docs/live-loop/repairs/live-seeded-force-login-on-demo.md",
+  "validationCommand": "npm run vh:plan && npm run vh:run:ci",
+  "pullRequestsOpened": 0,
+  "pushesPerformed": 0
+}
