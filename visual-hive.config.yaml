@@ -532,6 +532,7 @@ selection:
         - app-shell-stability
         - command-matrix-readiness
         - hive-integration-lane
+        - hosted-reference-smoke
       risk: high
     - pattern: "public/**"
       contracts:
