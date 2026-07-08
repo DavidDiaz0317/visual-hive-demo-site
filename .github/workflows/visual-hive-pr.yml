@@ -2,6 +2,12 @@ name: Visual Hive PR
 
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: "Base ref used for changed-file planning when manually validating a branch"
+        required: false
+        default: "main"
 
 permissions:
   contents: read
@@ -52,6 +58,7 @@ jobs:
         run: npm run build && npm run typecheck
 
       - name: Capture PR changed files
+        if: github.event_name == 'pull_request'
         run: |
           mkdir -p .visual-hive
           git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > .visual-hive/changed-files.pr.txt
@@ -59,6 +66,15 @@ jobs:
             git diff --name-only "origin/${{ github.base_ref }}"...HEAD > .visual-hive/changed-files.pr.txt
           fi
           echo "Changed files for Visual Hive planning:"
+          cat .visual-hive/changed-files.pr.txt || true
+
+      - name: Capture manual changed files
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p .visual-hive
+          git fetch origin "${{ inputs.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ inputs.base_ref }}"...HEAD > .visual-hive/changed-files.pr.txt
+          echo "Changed files for Visual Hive manual validation:"
           cat .visual-hive/changed-files.pr.txt || true
 
       - name: Visual Hive doctor
