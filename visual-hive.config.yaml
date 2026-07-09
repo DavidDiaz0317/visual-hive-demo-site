@@ -494,7 +494,7 @@ visual:
   maxDiffPixelRatio: 0.01
   updateSnapshots: false
   failOnMissingBaselineInCI: true
-  snapshotDir: ".visual-hive/snapshots"
+  snapshotDir: "visual-hive.baselines"
   artifactDir: ".visual-hive/artifacts"
 
 selection:

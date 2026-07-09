@@ -12,7 +12,6 @@ const steps = [
   ["graph-impact", "vh:graph:impact", 120_000],
   ["recommend", "vh:recommend", 120_000],
   ["plan", "vh:plan", 120_000],
-  ["run-seed", "vh:run:seed", 240_000],
   ["run-ci", "vh:run:ci", 240_000],
   ["mutate", "vh:mutate", 420_000],
   ["triage", "vh:triage", 120_000],
@@ -23,6 +22,8 @@ const steps = [
   ["hive-export", "vh:hive-export", 120_000],
   ["hive-beads", "vh:hive-beads", 120_000],
   ["hive-validate", "vh:hive-validate", 120_000],
+  ["hive-setup-pack", "vh:hive-setup-pack", 120_000],
+  ["hive-bundle", "vh:hive-bundle", 120_000],
   ["mcp", "vh:mcp", 120_000],
   ["artifacts", "vh:artifacts", 120_000],
   ["path-scan", "vh:path-scan", 120_000]

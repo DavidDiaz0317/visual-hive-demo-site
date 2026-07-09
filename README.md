@@ -41,7 +41,7 @@ Default local runs create:
 - zero source mutations
 - zero Hive API, LLM, or paid-provider calls
 
-Generated `.visual-hive` files are ignored by default. Baselines are seeded locally, then verified in CI mode.
+Generated `.visual-hive` files are ignored by default. Approved screenshots live in the tracked `visual-hive.baselines/` directory. Run `vh:run:seed` only for explicit local baseline creation/review; CI and live workflows never create their own expected images.
 
 ## Common Commands
 
@@ -76,6 +76,7 @@ npm run vh:hive-beads
 npm run vh:hive-validate
 npm run vh:hive-setup-pack
 npm run vh:hive-integration-smoke
+npm run vh:hive-bundle
 npm run vh:production-smoke
 npm run vh:snapshot
 npm run vh:artifacts
@@ -114,7 +115,6 @@ Run the PR-safe path locally:
 ```bash
 npm run vh:doctor
 npm run vh:plan
-npm run vh:run:seed
 npm run vh:run:ci
 npm run vh:triage
 npm run vh:evidence
