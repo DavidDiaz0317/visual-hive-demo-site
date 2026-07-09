@@ -64,6 +64,8 @@ jobs:
           npm run build
           npm run typecheck
           npm run vh:doctor
+          npm run vh:analyze
+          npm run vh:graph:impact
           npm run vh:plan
           npm run vh:run:ci
           npm run vh:mutate
