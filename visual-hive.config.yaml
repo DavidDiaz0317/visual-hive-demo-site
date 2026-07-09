@@ -494,6 +494,7 @@ visual:
   maxDiffPixelRatio: 0.01
   updateSnapshots: false
   failOnMissingBaselineInCI: true
+  baselinePlatform: platform
   snapshotDir: "visual-hive.baselines"
   artifactDir: ".visual-hive/artifacts"
 

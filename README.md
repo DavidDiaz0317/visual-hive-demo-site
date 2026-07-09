@@ -41,7 +41,7 @@ Default local runs create:
 - zero source mutations
 - zero Hive API, LLM, or paid-provider calls
 
-Generated `.visual-hive` files are ignored by default. Approved screenshots live in the tracked `visual-hive.baselines/` directory. Run `vh:run:seed` only for explicit local baseline creation/review; CI and live workflows never create their own expected images.
+Generated `.visual-hive` files are ignored by default. Approved screenshots live in tracked platform directories such as `visual-hive.baselines/win32/` and `visual-hive.baselines/linux/`. Run `vh:run:seed` only for explicit local baseline creation/review; CI and live workflows never create their own expected images.
 
 ## Common Commands
 
