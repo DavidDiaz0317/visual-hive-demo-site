@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: 5956c06258e607a508801faa24baf20ce2fb6ffb
+          ref: dd3cd7f3efa471fe3510b4c807e11f62669d23f1
           path: .hive-visual-tooling
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
@@ -72,7 +72,7 @@ jobs:
           echo "Visual Hive deterministic pipeline exit: $pipeline_exit"
           node "$VISUAL_HIVE_CLI" issues --config visual-hive.config.yaml --write
           node "$VISUAL_HIVE_CLI" hive integration-smoke --config visual-hive.config.yaml --mode measured
-          node -e 'const fs=require("fs");const candidates=[".visual-hive/plan.full.json",".visual-hive/plan.json"];const p=candidates.find(fs.existsSync);const v=p?JSON.parse(fs.readFileSync(p,"utf8")):{};const rows=Array.isArray(v.items)?v.items:[];const ids=[...new Set(rows.map(x=>x.contractId||x.id).filter(Boolean))].sort();fs.writeFileSync(".visual-hive/evaluated-contracts.txt",ids.join("\n")+"\n")'
+          node -e 'const fs=require("fs");const candidates=[".visual-hive/plan.full.json",".visual-hive/plan.json"];const p=candidates.find(fs.existsSync);const v=p?JSON.parse(fs.readFileSync(p,"utf8")):{};const rows=Array.isArray(v.items)?v.items:[];const layerPath=".visual-hive/testing-layers.json";const layerReport=fs.existsSync(layerPath)?JSON.parse(fs.readFileSync(layerPath,"utf8")):{};const layers=Array.isArray(layerReport.layers)?layerReport.layers:[];const ids=[...new Set([...rows.map(x=>x.contractId||x.id),...layers.map(x=>Number.isInteger(x.id)?"testing-layer:"+x.id:null)].filter(Boolean))].sort();fs.writeFileSync(".visual-hive/evaluated-contracts.txt",ids.join("\n")+"\n")'
       - name: Upload independently verifiable evidence
         id: evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
