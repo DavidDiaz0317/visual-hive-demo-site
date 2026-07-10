@@ -93,7 +93,7 @@ jobs:
           while IFS= read -r contract; do
             if [ -n "$contract" ]; then args+=(--evaluated-contract "$contract"); fi
           done < .visual-hive/evaluated-contracts.txt
-          node "$VISUAL_HIVE_CLI" hive bundle --config visual-hive.config.yaml --issues .visual-hive/issues.json --acmm-request 5 --scan-scope full --authoritative-for-resolution "${args[@]}"
+          node "$VISUAL_HIVE_CLI" hive bundle --config visual-hive.config.yaml --issues .visual-hive/issues.json --acmm-request 6 --scan-scope full --authoritative-for-resolution "${args[@]}"
       - name: Upload trusted Hive bundle
         id: bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
