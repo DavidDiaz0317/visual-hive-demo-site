@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: codex/hive-consolidation-v1
+          ref: eafa520cd39b716733811184991fd7c50815f060
           path: .visual-hive-tooling
 
       - name: Setup Node
