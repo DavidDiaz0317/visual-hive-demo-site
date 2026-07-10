@@ -42,12 +42,12 @@
     [
       "npm",
       "run",
-      "vh:mutation-proof"
+      "vh:suite"
     ],
     [
       "npm",
       "run",
-      "vh:suite"
+      "vh:mutation-proof"
     ],
     [
       "npm",
