@@ -340,6 +340,12 @@ contracts:
         fullPage: true
         mask:
           - "[data-testid='dynamic-run-id']"
+      - name: visual-asset-contract-mobile
+        route: "/"
+        viewport: mobile
+        fullPage: true
+        mask:
+          - "[data-testid='dynamic-run-id']"
 
   - id: command-matrix-readiness
     description: Command matrix should document fast, governance, provider, and Hive demo commands.
