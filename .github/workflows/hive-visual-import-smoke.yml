@@ -22,14 +22,14 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: eafa520cd39b716733811184991fd7c50815f060
+          ref: 59ca827ea5955bcd4459eb9ae203e9703533226a
           path: .visual-hive-tooling
 
       - name: Checkout Hive fork integration
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: DavidDiaz0317/hive
-          ref: 78234d88de2d54c30dde950c659ebdf86d388971
+          ref: e46286247190a06c1a9c195e6a82c4bbc54ef60a
           path: .hive-tooling
 
       - name: Setup Node
@@ -73,6 +73,9 @@ jobs:
           npm run vh:evidence
           npm run vh:issues
           npm run vh:handoff
+          # Writes .visual-hive/baselines.json before artifact upload.
+          node "$VISUAL_HIVE_CLI" baselines list --config visual-hive.config.yaml --write
+          npm run vh:report -- --github-step-summary
 
       - name: Generate Hive import bundle
         run: |
