@@ -22,8 +22,15 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: main
+          ref: eafa520cd39b716733811184991fd7c50815f060
           path: .visual-hive-tooling
+
+      - name: Checkout Hive fork integration
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: DavidDiaz0317/hive
+          ref: 78234d88de2d54c30dde950c659ebdf86d388971
+          path: .hive-tooling
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -33,6 +40,12 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             .visual-hive-tooling/package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
+        with:
+          go-version-file: .hive-tooling/v2/go.mod
+          cache-dependency-path: .hive-tooling/v2/go.sum
 
       - name: Install and build Visual Hive
         working-directory: .visual-hive-tooling
@@ -51,8 +64,9 @@ jobs:
           npm run build
           npm run typecheck
           npm run vh:doctor
+          npm run vh:analyze
+          npm run vh:graph:impact
           npm run vh:plan
-          npm run vh:run:seed
           npm run vh:run:ci
           npm run vh:mutate
           npm run vh:triage
@@ -67,9 +81,22 @@ jobs:
           npm run vh:hive-validate
           npm run vh:hive-setup-pack
           npm run vh:hive-integration-smoke
-          npm run vh:mcp:smoke
-          npm run vh:agent:issue
-          npm run vh:issues:publish
+          npm run vh:hive-bundle
+
+      - name: Build Hive fork and import Visual Hive bundle
+        shell: bash
+        run: |
+          go build -o "$RUNNER_TEMP/hive" ./cmd/hive
+          bundle_manifest="$(find "$GITHUB_WORKSPACE/.visual-hive/bundles" -name manifest.json -type f | head -n 1)"
+          test -n "$bundle_manifest"
+          "$RUNNER_TEMP/hive" visual import validate --bundle "$bundle_manifest" --max-acmm 5 | tee "$GITHUB_WORKSPACE/.visual-hive/hive-import-validation.json"
+          "$RUNNER_TEMP/hive" visual import apply --bundle "$bundle_manifest" --max-acmm 5 --beads-dir "$GITHUB_WORKSPACE/.visual-hive/hive-imported-beads" | tee "$GITHUB_WORKSPACE/.visual-hive/hive-import-first.json"
+          "$RUNNER_TEMP/hive" visual import apply --bundle "$bundle_manifest" --max-acmm 5 --beads-dir "$GITHUB_WORKSPACE/.visual-hive/hive-imported-beads" | tee "$GITHUB_WORKSPACE/.visual-hive/hive-import-second.json"
+          node -e 'const fs=require("fs"),p=require("path"),r=process.env.GITHUB_WORKSPACE; const first=JSON.parse(fs.readFileSync(p.join(r,".visual-hive/hive-import-first.json"))); const second=JSON.parse(fs.readFileSync(p.join(r,".visual-hive/hive-import-second.json"))); if (!first.applied || first.created < 1 || second.created !== 0 || second.skipped !== first.created) process.exit(1);'
+        working-directory: .hive-tooling/v2
+
+      - name: Verify published artifact safety and inventory
+        run: |
           npm run vh:path-scan
           npm run vh:artifacts
 
@@ -81,6 +108,5 @@ jobs:
           path: .visual-hive
           include-hidden-files: true
 
-      # This workflow intentionally performs no live Hive API calls and no live
-      # issue creation. Trusted issue publishing remains isolated in
-      # visual-hive-trusted-publisher.yml.
+      # This workflow imports into an ephemeral real Hive bead store and proves
+      # idempotency. It performs no live issue creation or production Hive write.

@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: main
+          ref: eafa520cd39b716733811184991fd7c50815f060
           path: .visual-hive-tooling
 
       - name: Setup Node
@@ -87,10 +87,6 @@ jobs:
           node scripts/visual-hive-cli.mjs graph impact --repo . --changed-files .visual-hive/changed-files.pr.txt
           node scripts/visual-hive-cli.mjs plan --config visual-hive.config.yaml --mode pr --changed-files .visual-hive/changed-files.pr.txt
           node -e 'const fs=require("fs"); const plan=JSON.parse(fs.readFileSync(".visual-hive/plan.json","utf8")); const selected=Array.isArray(plan.items)?plan.items:Array.isArray(plan.selectedContracts)?plan.selectedContracts:[]; const count=selected.length; fs.appendFileSync(process.env.GITHUB_ENV, "VISUAL_HIVE_SELECTED_CONTRACTS="+count+"\n"); console.log("Visual Hive selected "+count+" contract(s).");'
-
-      - name: Seed deterministic baselines
-        if: env.VISUAL_HIVE_SELECTED_CONTRACTS != '0'
-        run: npm run vh:run:seed
 
       - name: Verify deterministic contracts
         if: env.VISUAL_HIVE_SELECTED_CONTRACTS != '0'
