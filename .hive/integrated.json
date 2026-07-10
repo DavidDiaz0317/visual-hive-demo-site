@@ -25,6 +25,7 @@
   "coverage": "comprehensive",
   "default_branch": "main",
   "max_active_issues": 1,
+  "max_repair_attempts": 5,
   "provider": "codex",
   "repository": "DavidDiaz0317/visual-hive-demo-site",
   "repository_id": "1287566668",
