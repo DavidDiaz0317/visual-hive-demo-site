@@ -386,7 +386,7 @@ export function App() {
       };
     }
 
-    fetch("/api/dashboard-data")
+    fetch(`${import.meta.env.BASE_URL}api/dashboard-data`)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(`API status ${response.status}`);
@@ -412,7 +412,9 @@ export function App() {
   }, [seededIssue]);
 
   const visibleData = useMemo(() => data ?? fallbackData, [data]);
-  const previewSrc = hasSeededIssue(seededIssue, "broken-image") ? "/missing-visual-hive-preview.svg" : "/dashboard-preview.svg";
+  const previewSrc = hasSeededIssue(seededIssue, "broken-image")
+    ? `${import.meta.env.BASE_URL}missing-visual-hive-preview.svg`
+    : `${import.meta.env.BASE_URL}dashboard-preview.svg`;
 
   useEffect(() => {
     setBrokenAsset(false);
