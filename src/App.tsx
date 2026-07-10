@@ -301,9 +301,18 @@ const navItems = [
   { path: "/component-lab", label: "Component Lab" }
 ];
 
+const appBasePath = import.meta.env.BASE_URL.replace(/\/+$/, "");
+
 function currentPath(): string {
-  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  let path = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (appBasePath && path === appBasePath) path = "/";
+  else if (appBasePath && path.startsWith(`${appBasePath}/`)) path = path.slice(appBasePath.length);
   return navItems.some((item) => item.path === path) ? path : "/";
+}
+
+function appHref(route: string): string {
+  if (!appBasePath) return route;
+  return route === "/" ? `${appBasePath}/` : `${appBasePath}${route}`;
 }
 
 function seedFromLocation(): string {
@@ -327,7 +336,7 @@ export function ScenarioCard({ scenario, active }: { scenario: Scenario; active?
     <a
       className={`scenario-card ${active ? "active" : ""}`}
       data-testid={`seeded-issue-${scenario.id}`}
-      href={`/scenarios?issue=${scenario.id}`}
+      href={`${appHref("/scenarios")}?issue=${scenario.id}`}
     >
       <span className={`risk-chip ${scenario.risk}`}>{scenario.risk}</span>
       <strong>{scenario.label}</strong>
@@ -419,13 +428,13 @@ export function App() {
       data-testid="dashboard-page"
     >
       <aside className="sidebar" data-testid="testlab-shell">
-        <a className="brand" href="/" aria-label="Visual Hive Test Lab home">
+        <a className="brand" href={appHref("/")} aria-label="Visual Hive Test Lab home">
           <span aria-hidden="true">VH</span>
           <strong>Visual Hive Test Lab</strong>
         </a>
         <nav aria-label="Demo sections">
           {navItems.map((item) => (
-            <a className={route === item.path ? "active" : ""} href={item.path} key={item.path}>
+            <a className={route === item.path ? "active" : ""} href={appHref(item.path)} key={item.path}>
               {item.label}
             </a>
           ))}
@@ -583,7 +592,7 @@ function Overview({
           <PanelTitle label="Scenarios" title="Seeded issue gallery" />
           <div className="scenario-mini-list">
             {scenarios.slice(0, 6).map((scenario) => (
-              <a className={seededIssue === scenario.id ? "mini-scenario active" : "mini-scenario"} href={`/scenarios?issue=${scenario.id}`} key={scenario.id}>
+              <a className={seededIssue === scenario.id ? "mini-scenario active" : "mini-scenario"} href={`${appHref("/scenarios")}?issue=${scenario.id}`} key={scenario.id}>
                 <span className={`risk-chip ${scenario.risk}`}>{scenario.risk}</span>
                 <strong>{scenario.label}</strong>
               </a>

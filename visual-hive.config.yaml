@@ -453,7 +453,7 @@ contracts:
         - "body"
     screenshots:
       - name: deploy-preview-home
-        route: "/"
+        route: "/visual-hive-demo-site/"
         viewport: desktop
         fullPage: true
 

@@ -11,7 +11,7 @@
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", ".storybook/**/*.ts", "vite.config.ts", "playwright.config.ts"]
 }
