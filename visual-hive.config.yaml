@@ -276,6 +276,13 @@ contracts:
       - selector: "[data-testid='empty-data-state']"
         state: visible
         timeoutMs: 5000
+    steps:
+      - action: goto
+        route: "/?issue=empty-data"
+        description: "Seed the empty dashboard data state."
+      - action: assertVisible
+        selector: "[data-testid='empty-data-state']"
+        description: "Empty data state is visible."
     selectors:
       mustExist:
         - "[data-testid='empty-data-state']"
