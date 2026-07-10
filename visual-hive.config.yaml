@@ -171,6 +171,12 @@ contracts:
         fullPage: true
         mask:
           - "[data-testid='dynamic-run-id']"
+      - name: public-auth-boundary-mobile
+        route: "/"
+        viewport: mobile
+        fullPage: true
+        mask:
+          - "[data-testid='dynamic-run-id']"
 
   - id: scenario-gallery-contract
     description: Scenario gallery must expose all seeded mutation routes for live demonstrations.
