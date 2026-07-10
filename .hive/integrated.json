@@ -21,6 +21,7 @@
   "automation": "issues",
   "coverage": "comprehensive",
   "default_branch": "main",
+  "max_active_issues": 1,
   "provider": "codex",
   "repository": "DavidDiaz0317/visual-hive-demo-site",
   "repository_id": "1287566668",
@@ -53,6 +54,6 @@
     ]
   ],
   "visual_hive": true,
-  "visual_hive_ref": "fa8b53585b57f3e78afd9908b90dd52239e078a5",
+  "visual_hive_ref": "dec393b49b77eb4633ff736eedadd00f7dd6dd76",
   "visual_hive_repository": "DavidDiaz0317/visual-hive"
 }
