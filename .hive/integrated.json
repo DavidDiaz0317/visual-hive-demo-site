@@ -12,6 +12,8 @@
   ],
   "allowed_repair_paths": [
     "src/**",
+    "public/**",
+    "index.html",
     "test/**",
     "tests/**",
     "**/*.test.*",
