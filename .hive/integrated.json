@@ -43,6 +43,11 @@
     [
       "npm",
       "run",
+      "vh:plan"
+    ],
+    [
+      "npm",
+      "run",
       "vh:run"
     ],
     [
