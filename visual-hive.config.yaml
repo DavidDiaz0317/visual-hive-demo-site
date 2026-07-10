@@ -206,6 +206,10 @@ contracts:
         route: "/scenarios"
         viewport: desktop
         fullPage: true
+      - name: scenario-gallery-contract-mobile
+        route: "/scenarios"
+        viewport: mobile
+        fullPage: true
 
   - id: api-error-state-contract
     description: API failure state must show a visible alert and remain useful for hidden-alert mutations.
