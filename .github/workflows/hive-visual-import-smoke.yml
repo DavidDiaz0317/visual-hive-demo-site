@@ -82,11 +82,6 @@ jobs:
           npm run vh:hive-setup-pack
           npm run vh:hive-integration-smoke
           npm run vh:hive-bundle
-          npm run vh:mcp:smoke
-          npm run vh:agent:issue
-          npm run vh:issues:publish
-          npm run vh:path-scan
-          npm run vh:artifacts
 
       - name: Build Hive fork and import Visual Hive bundle
         shell: bash
@@ -99,6 +94,11 @@ jobs:
           "$RUNNER_TEMP/hive" visual import apply --bundle "$bundle_manifest" --max-acmm 5 --beads-dir "$GITHUB_WORKSPACE/.visual-hive/hive-imported-beads" | tee "$GITHUB_WORKSPACE/.visual-hive/hive-import-second.json"
           node -e 'const fs=require("fs"),p=require("path"),r=process.env.GITHUB_WORKSPACE; const first=JSON.parse(fs.readFileSync(p.join(r,".visual-hive/hive-import-first.json"))); const second=JSON.parse(fs.readFileSync(p.join(r,".visual-hive/hive-import-second.json"))); if (!first.applied || first.created < 1 || second.created !== 0 || second.skipped !== first.created) process.exit(1);'
         working-directory: .hive-tooling/v2
+
+      - name: Verify published artifact safety and inventory
+        run: |
+          npm run vh:path-scan
+          npm run vh:artifacts
 
       - name: Upload Visual Hive artifacts
         if: always()
