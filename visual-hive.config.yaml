@@ -264,6 +264,10 @@ contracts:
         route: "/scenarios?issue=api-500"
         viewport: desktop
         fullPage: true
+      - name: api-error-state-contract-mobile
+        route: "/scenarios?issue=api-500"
+        viewport: mobile
+        fullPage: true
 
   - id: data-empty-state-contract
     description: Empty data state should remain explicit rather than silently rendering partial cards.
