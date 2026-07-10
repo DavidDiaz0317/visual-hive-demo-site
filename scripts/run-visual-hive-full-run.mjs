@@ -384,6 +384,10 @@ async function verifyCoverage() {
 
 async function verifyGovernance() {
   const workflows = await readJson("workflows.json");
+  const integratedConfigPath = path.join(repoRoot, ".hive", "integrated.json");
+  const integratedConfig = existsSync(integratedConfigPath)
+    ? JSON.parse(await readFile(integratedConfigPath, "utf8"))
+    : undefined;
   const providers = await readJson("provider-results.json");
   const providerHandoff = await readJson("provider-handoff.json");
   const providerUpload = await readJson("provider-upload/argos/manifest.json");
@@ -394,14 +398,27 @@ async function verifyGovernance() {
   const readiness = await readJson("readiness.json");
   assert(JSON.stringify(workflows).includes("pull_request"), "workflow audit must include PR workflow evidence.");
   assert((workflows.summary?.workflowsUsingPullRequestTarget ?? 0) === 0, "workflow audit must not include pull_request_target execution.");
-  assert(
-    workflows.workflows?.some(
+  const trustedStandaloneWriter = workflows.workflows?.some(
       (workflow) =>
         (workflow.kind === "trusted_handoff" || workflow.kind === "trusted_issue") &&
         workflow.permissions?.issues === "write"
-    ),
-    "workflow audit must identify a trusted issue-writing workflow."
+    );
+  const integratedHiveOwner =
+    integratedConfig?.schema_version === "hive.integrated-config.v1" &&
+    integratedConfig?.visual_hive === true &&
+    workflows.workflows?.some(
+      (workflow) =>
+        workflow.path?.replaceAll("\\", "/").endsWith("/.github/workflows/hive-visual-hive.yml") &&
+        workflow.permissions?.issues !== "write" &&
+        workflow.permissions?.["pull-requests"] !== "write"
+    );
+  assert(
+    trustedStandaloneWriter || integratedHiveOwner,
+    "workflow audit must identify either a trusted standalone writer or the read-only producer for a Hive-owned integrated lifecycle."
   );
+  if (integratedHiveOwner) {
+    assert(!trustedStandaloneWriter, "integrated mode must not retain a standalone issue writer alongside Hive.");
+  }
   assert((providers.externalCallsMade ?? 0) === 0, "provider mock/list results must make zero external calls.");
   assert((providerHandoff.externalCallsMade ?? 0) === 0, "provider handoff must make zero external calls.");
   assert((providerUpload.externalCallsMade ?? 0) === 0, "provider upload dry-run must make zero external calls.");
