@@ -1,0 +1,77 @@
+name: Hive Visual Hive Production
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * *"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hive-visual-hive-production
+  cancel-in-progress: false
+
+jobs:
+  visual-hive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: DavidDiaz0317/visual-hive
+          ref: eafa520cd39b716733811184991fd7c50815f060
+          path: .hive-visual-tooling
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: .hive-visual-tooling/package-lock.json
+      - name: Build immutable Visual Hive tooling
+        working-directory: .hive-visual-tooling
+        run: npm ci && npm run build
+      - name: Move trusted tooling outside target tree
+        shell: bash
+        run: |
+          mv .hive-visual-tooling "$RUNNER_TEMP/visual-hive-tooling"
+          echo "VISUAL_HIVE_CLI=$RUNNER_TEMP/visual-hive-tooling/packages/cli/dist/index.js" >> "$GITHUB_ENV"
+      - name: Run complete deterministic production scan
+        shell: bash
+        run: |
+          node "$VISUAL_HIVE_CLI" pipeline --config visual-hive.config.yaml --mode full --ci --continue-on-error
+          node "$VISUAL_HIVE_CLI" issues --config visual-hive.config.yaml --write
+          node -e 'const fs=require("fs");const candidates=[".visual-hive/plan.full.json",".visual-hive/plan.json"];const p=candidates.find(fs.existsSync);const v=p?JSON.parse(fs.readFileSync(p,"utf8")):{};const rows=Array.isArray(v.items)?v.items:[];const ids=[...new Set(rows.map(x=>x.contractId||x.id).filter(Boolean))].sort();fs.writeFileSync(".visual-hive/evaluated-contracts.txt",ids.join("\n")+"\n")'
+      - name: Upload independently verifiable evidence
+        id: evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: visual-hive-evidence-${{ github.run_id }}
+          path: |
+            .visual-hive
+            !.visual-hive/bundles/**
+          if-no-files-found: error
+          retention-days: 14
+      - name: Build Hive lifecycle bundle bound to evidence artifact
+        shell: bash
+        env:
+          VISUAL_HIVE_WORKFLOW_ARTIFACT_ID: ${{ steps.evidence.outputs.artifact-id }}
+        run: |
+          args=()
+          while IFS= read -r contract; do
+            if [ -n "$contract" ]; then args+=(--evaluated-contract "$contract"); fi
+          done < .visual-hive/evaluated-contracts.txt
+          node "$VISUAL_HIVE_CLI" hive bundle --config visual-hive.config.yaml --issues .visual-hive/issues.json --scan-scope full --authoritative-for-resolution "${args[@]}"
+      - name: Upload trusted Hive bundle
+        id: bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: visual-hive-bundle-${{ github.run_id }}
+          path: .visual-hive/bundles
+          if-no-files-found: error
+          retention-days: 14
