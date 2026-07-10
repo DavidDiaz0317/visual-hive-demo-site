@@ -3,130 +3,91 @@ name: Visual Hive PR
 on:
   pull_request:
   workflow_dispatch:
-    inputs:
-      base_ref:
-        description: "Base ref used for changed-file planning when manually validating a branch"
-        required: false
-        default: "main"
 
 permissions:
   contents: read
+  actions: read
+
+concurrency:
+  group: visual-hive-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   visual-hive:
     runs-on: ubuntu-latest
-    env:
-      VISUAL_HIVE_CLI: ${{ github.workspace }}/.visual-hive-tooling/packages/cli/dist/index.js
+    timeout-minutes: 45
     steps:
-      - name: Checkout demo repo
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           fetch-depth: 0
-
-      - name: Checkout Visual Hive
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: eafa520cd39b716733811184991fd7c50815f060
-          path: .visual-hive-tooling
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+          ref: 5956c06258e607a508801faa24baf20ce2fb6ffb
+          path: .hive-visual-tooling
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            .visual-hive-tooling/package-lock.json
-
-      - name: Install and build Visual Hive
-        working-directory: .visual-hive-tooling
+          cache-dependency-path: .hive-visual-tooling/package-lock.json
+      - name: Build immutable Visual Hive tooling
+        working-directory: .hive-visual-tooling
         run: npm ci && npm run build
-
-      - name: Move Visual Hive tooling outside client scan path
+      - name: Move trusted tooling outside target tree
+        shell: bash
         run: |
-          mv .visual-hive-tooling "$RUNNER_TEMP/visual-hive-tooling"
+          mv .hive-visual-tooling "$RUNNER_TEMP/visual-hive-tooling"
           echo "VISUAL_HIVE_CLI=$RUNNER_TEMP/visual-hive-tooling/packages/cli/dist/index.js" >> "$GITHUB_ENV"
-
-      - name: Install demo app
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Build demo app
-        run: npm run build && npm run typecheck
-
-      - name: Capture PR changed files
-        if: github.event_name == 'pull_request'
+      - name: Install target dependencies and matching Playwright browser
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ]; then
+            corepack enable
+            yarn install --immutable
+          elif [ -f package.json ]; then
+            npm install
+          fi
+          playwright_cli="$RUNNER_TEMP/visual-hive-tooling/node_modules/@playwright/test/cli.js"
+          if [ -f node_modules/@playwright/test/cli.js ]; then
+            playwright_cli="node_modules/@playwright/test/cli.js"
+          fi
+          node "$playwright_cli" install --with-deps chromium
+      - name: Capture pull request scope
+        shell: bash
         run: |
           mkdir -p .visual-hive
-          git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > .visual-hive/changed-files.pr.txt
-          if [ ! -s .visual-hive/changed-files.pr.txt ]; then
-            git diff --name-only "origin/${{ github.base_ref }}"...HEAD > .visual-hive/changed-files.pr.txt
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > .visual-hive/changed-files.pr.txt
+          else
+            git fetch origin main --depth=1
+            git diff --name-only "origin/main"...HEAD > .visual-hive/changed-files.pr.txt
           fi
-          echo "Changed files for Visual Hive planning:"
-          cat .visual-hive/changed-files.pr.txt || true
-
-      - name: Capture manual changed files
-        if: github.event_name == 'workflow_dispatch'
+      - name: Run deterministic repository and Visual Hive gates
+        shell: bash
         run: |
-          mkdir -p .visual-hive
-          git fetch origin "${{ inputs.base_ref }}" --depth=1
-          git diff --name-only "origin/${{ inputs.base_ref }}"...HEAD > .visual-hive/changed-files.pr.txt
-          echo "Changed files for Visual Hive manual validation:"
-          cat .visual-hive/changed-files.pr.txt || true
-
-      - name: Visual Hive doctor
-        run: npm run vh:doctor
-
-      - name: Visual Hive graph and plan
-        run: |
-          npm run vh:analyze
-          npm run vh:graph:search
-          node scripts/visual-hive-cli.mjs graph impact --repo . --changed-files .visual-hive/changed-files.pr.txt
-          node scripts/visual-hive-cli.mjs plan --config visual-hive.config.yaml --mode pr --changed-files .visual-hive/changed-files.pr.txt
-          node -e 'const fs=require("fs"); const plan=JSON.parse(fs.readFileSync(".visual-hive/plan.json","utf8")); const selected=Array.isArray(plan.items)?plan.items:Array.isArray(plan.selectedContracts)?plan.selectedContracts:[]; const count=selected.length; fs.appendFileSync(process.env.GITHUB_ENV, "VISUAL_HIVE_SELECTED_CONTRACTS="+count+"\n"); console.log("Visual Hive selected "+count+" contract(s).");'
-
-      - name: Verify deterministic contracts
-        if: env.VISUAL_HIVE_SELECTED_CONTRACTS != '0'
-        run: npm run vh:run:ci
-
-      - name: Triage and evidence
+          node --test
+          set +e
+          node "$VISUAL_HIVE_CLI" pipeline --config visual-hive.config.yaml --mode pr --changed-files .visual-hive/changed-files.pr.txt --ci --continue-on-error --skip-install
+          pipeline_exit=$?
+          set -e
+          printf '%s\n' "$pipeline_exit" > .visual-hive/pipeline-exit-code.txt
+          node "$VISUAL_HIVE_CLI" issues --config visual-hive.config.yaml --write
+          node "$VISUAL_HIVE_CLI" hive integration-smoke --config visual-hive.config.yaml --mode measured
+      - name: Upload review evidence
         if: always()
-        # Writes .visual-hive/baselines.json before artifact upload.
-        run: |
-          if [ "${VISUAL_HIVE_SELECTED_CONTRACTS}" != "0" ]; then
-            node scripts/visual-hive-cli.mjs baselines list --config visual-hive.config.yaml --write
-            npm run vh:triage
-            npm run vh:evidence
-          else
-            echo "No Visual Hive contracts selected for this PR; writing planning-only artifacts."
-          fi
-          npm run vh:issues
-          if [ "${VISUAL_HIVE_SELECTED_CONTRACTS}" != "0" ]; then
-            npm run vh:handoff
-            npm run vh:test-creation
-            npm run vh:agent-packet
-          else
-            echo "Skipping handoff and agent packet because no deterministic evidence packet was generated."
-          fi
-          npm run vh:mcp
-          npm run vh:artifacts
-          if [ "${VISUAL_HIVE_SELECTED_CONTRACTS}" != "0" ]; then
-            npm run vh:report -- --github-step-summary
-          else
-            {
-              echo "## Visual Hive Summary"
-              echo ""
-              echo "No Visual Hive contracts were selected for this PR. Planning, graph, issue, MCP, and artifact-index evidence were uploaded for review."
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - name: Upload Visual Hive artifacts
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: visual-hive-pr
           path: .visual-hive
+          if-no-files-found: error
           include-hidden-files: true
+          retention-days: 14
+      - name: Enforce deterministic verdict
+        if: always()
+        shell: bash
+        run: exit "$(cat .visual-hive/pipeline-exit-code.txt)"

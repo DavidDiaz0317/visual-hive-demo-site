@@ -24,12 +24,16 @@
   "automation": "repair-pr",
   "coverage": "comprehensive",
   "default_branch": "main",
-  "max_active_issues": 2,
+  "max_active_issues": 1,
   "provider": "codex",
   "repository": "DavidDiaz0317/visual-hive-demo-site",
   "repository_id": "1287566668",
   "schema_version": "hive.integrated-config.v1",
   "test_commands": [
+    [
+      "node",
+      "--test"
+    ],
     [
       "npm",
       "run",
@@ -67,6 +71,6 @@
     ]
   ],
   "visual_hive": true,
-  "visual_hive_ref": "d1e795e5a47f7cae5ab41d3fc7fe4ff287b26acd",
+  "visual_hive_ref": "5956c06258e607a508801faa24baf20ce2fb6ffb",
   "visual_hive_repository": "DavidDiaz0317/visual-hive"
 }
