@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: eafa520cd39b716733811184991fd7c50815f060
+          ref: fa8b53585b57f3e78afd9908b90dd52239e078a5
           path: .hive-visual-tooling
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -73,7 +73,7 @@ jobs:
           while IFS= read -r contract; do
             if [ -n "$contract" ]; then args+=(--evaluated-contract "$contract"); fi
           done < .visual-hive/evaluated-contracts.txt
-          node "$VISUAL_HIVE_CLI" hive bundle --config visual-hive.config.yaml --issues .visual-hive/issues.json --scan-scope full --authoritative-for-resolution "${args[@]}"
+          node "$VISUAL_HIVE_CLI" hive bundle --config visual-hive.config.yaml --issues .visual-hive/issues.json --acmm-request 4 --scan-scope full --authoritative-for-resolution "${args[@]}"
       - name: Upload trusted Hive bundle
         id: bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
