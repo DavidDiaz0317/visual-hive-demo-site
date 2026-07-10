@@ -1,5 +1,5 @@
 {
-  "acmm_level": 4,
+  "acmm_level": 5,
   "allowed_auto_merge_paths": [
     "test/**",
     "tests/**",
@@ -18,10 +18,10 @@
     "**/*.spec.*",
     "**/*_test.go"
   ],
-  "automation": "issues",
+  "automation": "repair-pr",
   "coverage": "comprehensive",
   "default_branch": "main",
-  "max_active_issues": 1,
+  "max_active_issues": 2,
   "provider": "codex",
   "repository": "DavidDiaz0317/visual-hive-demo-site",
   "repository_id": "1287566668",
@@ -54,6 +54,6 @@
     ]
   ],
   "visual_hive": true,
-  "visual_hive_ref": "a5c7609d36882daf2e8fca155833646bbbac5ad1",
+  "visual_hive_ref": "d1e795e56e8f295a5722fa2dd16ce669a6e4a450",
   "visual_hive_repository": "DavidDiaz0317/visual-hive"
 }
