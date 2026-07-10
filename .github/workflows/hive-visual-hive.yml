@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: fa8b53585b57f3e78afd9908b90dd52239e078a5
+          ref: dec393b49b77eb4633ff736eedadd00f7dd6dd76
           path: .hive-visual-tooling
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
