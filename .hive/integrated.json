@@ -42,7 +42,12 @@
     [
       "npm",
       "run",
-      "vh:suite"
+      "vh:run"
+    ],
+    [
+      "npm",
+      "run",
+      "vh:mutate"
     ],
     [
       "npm",
