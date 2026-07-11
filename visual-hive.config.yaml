@@ -433,6 +433,10 @@ contracts:
         route: "/guarded"
         viewport: desktop
         fullPage: true
+      - name: guarded-repair-policy-mobile
+        route: "/guarded"
+        viewport: mobile
+        fullPage: true
 
   - id: fullstack-command-group-health
     description: CommandGroup target should start the web app and mock API service for lifecycle evidence.
