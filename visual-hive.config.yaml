@@ -310,6 +310,17 @@ contracts:
       - selector: "[data-testid='dashboard-page']"
         state: visible
         timeoutMs: 5000
+    steps:
+      - action: goto
+        route: "/"
+        description: "Navigate to the mobile app shell."
+        state: visible
+        timeoutMs: 15000
+      - action: assertVisible
+        selector: "[data-testid='dashboard-page']"
+        description: "Dashboard page is visible on the mobile layout."
+        state: visible
+        timeoutMs: 15000
     selectors:
       mustExist:
         - "[data-testid='dashboard-page']"
