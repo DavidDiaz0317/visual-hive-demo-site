@@ -1,15 +1,13 @@
 # Hive + Visual Hive Production Proof
 
-This document records the July 10, 2026 production acceptance run against `DavidDiaz0317/visual-hive-demo-site`. The proof used real GitHub Actions, issues, branches, pull requests, required checks, merges, target-branch verification, issue reopening, and Hive-owned issue closure. No mock GitHub server satisfied any lifecycle acceptance step.
+This document records the July 10-11, 2026 production acceptance run against `DavidDiaz0317/visual-hive-demo-site`. The proof used real GitHub Actions, issues, branches, pull requests, required checks, merges, target-branch verification, issue reopening, and Hive-owned issue closure. No mock GitHub server satisfied any lifecycle acceptance step.
 
 ## Immutable versions
 
-- Demo target after lifecycle hardening: `3f8b3864d103b6fd3615dce26346195abcabe7cf`.
-- Visual Hive runtime: `59ca827ea5955bcd4459eb9ae203e9703533226a`, published as [`v0.2.0`](https://github.com/DavidDiaz0317/visual-hive/releases/tag/v0.2.0). Release workflow [`29105468583`](https://github.com/DavidDiaz0317/visual-hive/actions/runs/29105468583) built, smoke-tested, checksummed, and attested the bundle.
-- Hive integrated release: `d14b31266475c093d45631ac60c0676d68a0bbd7`, published only from the fork as [`v0.3.0-integrated.3`](https://github.com/DavidDiaz0317/hive/releases/tag/v0.3.0-integrated.3). Release workflow [`29106186941`](https://github.com/DavidDiaz0317/hive/actions/runs/29106186941) built and attested Linux and Windows distributions.
-- Final Hive fork branch, including release-smoke documentation: `5c026896a1fae5c5dfca1eefccc9ce7a8f7f525d`.
-- Post-release Visual Hive branch test isolation fix: `62afb06f0e9c7f53f3e0cba1f9c7caa22f0c92b7`; push and PR-context CI are green.
-- Bundled runtimes: Visual Hive `0.2.0`, Node `v22.23.1`, Windows x64 and glibc Linux x64.
+- Demo target after the released setup upgrade: `43c93df84221a1881eb6e56239d82e52b851b922` (setup PR [`#141`](https://github.com/DavidDiaz0317/visual-hive-demo-site/pull/141)); the external acceptance suite evaluated repaired application commit `7e0550f8a20ccb77b1b36aed6cd55fb810686ce6`.
+- Visual Hive runtime: `f67f936fe9a75c250a908e16806ef3b714a1478a`, published as [`v0.2.2`](https://github.com/DavidDiaz0317/visual-hive/releases/tag/v0.2.2). Release workflow [`29136097825`](https://github.com/DavidDiaz0317/visual-hive/actions/runs/29136097825) built, smoke-tested, checksummed, and attested the bundle.
+- Hive integrated release: `eb9f83dd3e034c896d0a1792e5a2013ce640d45f`, published only from the fork as [`v0.3.1-integrated.8`](https://github.com/DavidDiaz0317/hive/releases/tag/v0.3.1-integrated.8). Release workflow [`29136343157`](https://github.com/DavidDiaz0317/hive/actions/runs/29136343157) built, checksummed, and attested Linux and Windows distributions.
+- Bundled runtimes: Visual Hive `0.2.2`, Node `v22.23.1`, Windows x64 and glibc Linux x64.
 
 Hive changes were pushed only to `DavidDiaz0317/hive`. No upstream `kubestellar/hive` pull request remains open.
 
@@ -18,23 +16,23 @@ Hive changes were pushed only to `DavidDiaz0317/hive`. No upstream `kubestellar/
 Windows used the public release, with no local release directory and no attestation bypass:
 
 ```text
-gh attestation verify hive-integrated-v0.3.0-integrated.3-windows-amd64.zip --repo DavidDiaz0317/hive
-Hive v0.3.0-integrated.3 installed at <clean-windows-directory>
-visual-hive --version => 0.2.0
-distribution hive_commit => d14b31266475c093d45631ac60c0676d68a0bbd7
-distribution visual_hive_commit => 59ca827ea5955bcd4459eb9ae203e9703533226a
-hive setup ... => idempotent: true, setup PR: #131
+gh attestation verify hive-integrated-v0.3.1-integrated.8-windows-amd64.zip --repo DavidDiaz0317/hive
+Hive v0.3.1-integrated.8 installed at <clean-windows-directory>
+visual-hive --version => 0.2.2
+distribution hive_commit => eb9f83dd3e034c896d0a1792e5a2013ce640d45f
+distribution visual_hive_commit => f67f936fe9a75c250a908e16806ef3b714a1478a
+distribution files => 276; Visual Hive files => 270; bundled schemas => 84
+hive setup ... => setup PR: #141; exact-head check: 29136605458
 hive doctor --json => production_ready: true
 ```
 
 Pristine Ubuntu 24.04 used the public Linux release with Git and GitHub CLI installed, but without Go, Node, npm, Docker-in-container, or a Visual Hive checkout:
 
 ```text
-hive-integrated-v0.3.0-integrated.3-linux-amd64.tar.gz: OK
-Hive v0.3.0-integrated.3 installed at /proof/installed
-visual-hive --version => 0.2.0
-hive setup --plan --json => schema hive.setup-plan.v1, read_only: true
-Signed Linux integrated installer smoke passed: /proof
+hive-integrated-v0.3.1-integrated.8-linux-amd64.tar.gz: OK
+Hive v0.3.1-integrated.8 installed at /opt/hive
+visual-hive release manifest => 0.2.2 at f67f936fe9a75c250a908e16806ef3b714a1478a
+bundled schemas => 84 schemas, 219 checks, 0 failures
 ```
 
 Both installers verified GitHub build provenance, archive checksums, platform identity, safe paths, file sizes, and every per-file SHA-256 entry before activation. The packaged release also installs the Codex `/hive` skill. Git and a current `gh` are prerequisites; Alpine/musl is not supported by the official bundled Node runtime.
@@ -43,7 +41,7 @@ Both installers verified GitHub build provenance, archive checksums, platform id
 
 The installed command inspected React, TypeScript, Playwright, Storybook, npm scripts, existing workflows, branch protection, permissions, high-risk paths, and reviewed baselines. It generated the comprehensive 13-layer repository plan and created setup PR [`#128`](https://github.com/DavidDiaz0317/visual-hive-demo-site/pull/128). Re-running setup reused the merged PR and produced no duplicate setup PR. Later generator hardening used reviewed setup PRs [`#130`](https://github.com/DavidDiaz0317/visual-hive-demo-site/pull/130) and [`#131`](https://github.com/DavidDiaz0317/visual-hive-demo-site/pull/131).
 
-The released scheduler is running from the installed distribution. `hive status --json` reports the process identity, `production_ready: true`, last successful run [`29106405829`](https://github.com/DavidDiaz0317/visual-hive-demo-site/actions/runs/29106405829), and the next scheduled run. Setup and production workflows are read-only, secret-free for target code, SHA-pin every third-party Action, and pin Visual Hive to its exact commit.
+The released scheduler runs from the installed `.8` distribution at a 15-minute interval. `hive status --json` reports its process identity, exact executable, `production_ready: true`, current attempt, last successful hosted run, and next scheduled run. Setup and production workflows are read-only, secret-free for target code, SHA-pin every third-party Action, and pin Visual Hive to its exact commit.
 
 ## Real issue, agent, PR, merge, and closure lifecycle
 
@@ -58,6 +56,18 @@ The repository-specific Unit test adequacy finding used stable fingerprint `937f
 7. Complete target verification [`29098791412`](https://github.com/DavidDiaz0317/visual-hive-demo-site/actions/runs/29098791412) proved the finding absent; Hive updated and closed issue #121. A duplicate-free rerun produced no second issue, bead, branch, or PR.
 
 Hive was restarted during an active repair and recovered the persisted attempt without duplicating the issue, bead, or PR. Retry-budget denial was recorded before the bounded replacement attempt was authorized; no threshold, baseline, assertion, workflow protection, or security gate was weakened.
+
+## Reviewed baseline and current closure proof
+
+Hive selected the genuine `missing_mobile_viewport` finding with repository fingerprint `52fd3562b7fdd90c028564443f0799a623663b5f57632b21691f9aee21821c97` and reused existing issue [`#59`](https://github.com/DavidDiaz0317/visual-hive-demo-site/issues/59), rather than creating a duplicate. A real Codex repair added the mobile `api-error-state-contract` screenshot to `visual-hive.config.yaml`.
+
+The initial exact-head hosted run [`29116676219`](https://github.com/DavidDiaz0317/visual-hive-demo-site/actions/runs/29116676219) failed only because the new cross-platform baselines did not yet exist. Hive did not approve them. It created separate draft, hold-labeled baseline PR [`#137`](https://github.com/DavidDiaz0317/visual-hive-demo-site/pull/137) containing only two reviewed images. Their SHA-256 digests were `03607f01461550e344cf1f2dd75727bdaec37efc395de787fac405763e2c0118` for Linux and `db7fea310bafc8e7a3867dc9031cde4c909a2c40dbce164b84aa04716677d6cb` for Windows. Exact-head check [`29116774447`](https://github.com/DavidDiaz0317/visual-hive-demo-site/actions/runs/29116774447) passed before manual review and merge as `ea8aa16321d7d6ee3cb6b69617afb939bc556443`.
+
+Hive then resynchronized and revalidated the original repair. During this live recovery, GitHub exposed both an older cancelled and newer successful check with the same name. The production state machine was hardened to select the newest immutable check-run ID, preserve the same PR across no-change retries, reject marker reuse on another branch, and reconcile any legacy duplicate by exact marker/branch/head. Released `.5` closed superseded PR [`#136`](https://github.com/DavidDiaz0317/visual-hive-demo-site/pull/136), deleted its exact branch, and retained one active repair PR.
+
+Final repair PR [`#138`](https://github.com/DavidDiaz0317/visual-hive-demo-site/pull/138) changed only `visual-hive.config.yaml`. Exact head `53f2970ea294c6e4075039d85becb4d659fcd0e6` passed required check [`29119533624`](https://github.com/DavidDiaz0317/visual-hive-demo-site/actions/runs/29119533624). Because configuration is outside the low-risk auto-merge allowlist, Hive durably held the PR for review. It was manually merged with an expected-head guard as `7e0550f8a20ccb77b1b36aed6cd55fb810686ce6`; issue #59 remained open.
+
+Complete authoritative target run [`29121160007`](https://github.com/DavidDiaz0317/visual-hive-demo-site/actions/runs/29121160007) evaluated the affected contract at the exact merge, verified bundle `6b04e4d7-4901-407b-81d8-f2ddbf270067` with digest `c3335ec2c64b8c4f64c13160c7ebfb732208f76165f33b33c655758bc342532f`, and proved the finding absent. Hive then updated and closed issue #59 and bead `4cd000a3-d13`. Released `.7` cleanup logic, retained in `.8`, also recovered and deleted the legacy baseline branch at exact reviewed head `c0a0a95e0f4ac28b2ae778dbdbbc1844a98a54c3`; no `hive/baseline-*` or superseded repair ref remains.
 
 ## Workflow-safety closure proof
 
@@ -79,16 +89,18 @@ Redacted append-only audit excerpts:
 {"action":"infer_absent_finding","allowed":true,"repository_fingerprint":"e6bc...","detail":"omitted from exhaustive evaluated-contract inventory"}
 {"action":"authorize_close_issue","allowed":true,"repository_fingerprint":"e6bc..."}
 {"action":"issue_closed","allowed":true,"repository_fingerprint":"e6bc..."}
+{"action":"authorize_duplicate_repair_reconciled","allowed":true,"repository_fingerprint":"52fd...","detail":"closed superseded PR #136 and deleted exact branch; retained PR #138"}
+{"action":"authorize_legacy_baseline_branch_reconciled","allowed":true,"repository_fingerprint":"52fd...","detail":"deleted exact merged proposal branch from PR #137"}
 ```
 
 No credential values are stored in repository configuration, proof text, lifecycle records, daemon status, or audit excerpts.
 
 ## Verification results
 
-- Visual Hive: Node 22; build passed; typecheck passed; 400/400 tests passed; lint passed; all 48 `demo:all` steps passed; schema catalog passed 84 schemas and 219 checks.
-- Hive fork: `go build ./...`, `go test ./...`, and `go vet ./...` passed after the final lifecycle change.
-- Demo: build and typecheck passed locally; hosted PR checks passed for all reviewed workflow changes; complete deterministic runs, strict baselines, mutation proof, test-creation planning, evidence bundling, provenance verification, lifecycle import, recurrence, restart recovery, and closure passed.
-- Installers: signed public Windows install passed; signed public Ubuntu install and read-only setup plan passed; local clean Windows/Linux distribution smokes also passed.
+- Visual Hive: Node 22; build passed; typecheck passed; 401/401 tests passed; lint passed; all 48 `demo:all` steps passed; schema catalog passed.
+- Hive fork: `go build ./...`, `go test ./...`, and `go vet ./...` passed after the final lifecycle change; Linux race tests passed for automation, GitHub, repair, lifecycle, and integrated orchestration packages.
+- Demo: the packaged `.8` Visual Hive CLI completed the 13-section external `vh:full-run` in 425.9 seconds with every section passing, including clean and seeded-defect runs, 12/12 mutation results, evidence/verdict generation, Hive handoff, issue/agent packets, MCP, tool registry, schema verification, and control plane. Hosted PR checks passed for all reviewed workflow changes; lifecycle import, recurrence, restart recovery, and closure passed.
+- Installers: signed public `.8` Windows install passed; signed public `.8` Ubuntu 24.04 container install passed from a pristine environment without Go or Node. Both verified attestation, checksum, platform, and every manifest entry; the installed bundle verified all 84 schemas and 219 checks.
 - Release Actions: all production Actions and third-party checkouts use immutable commit SHAs.
 
 ## Operational boundaries
