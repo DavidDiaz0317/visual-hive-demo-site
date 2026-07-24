@@ -710,5 +710,5 @@ visual:
     baselinePlatform: platform
     failOnMissingBaselineInCI: true
     maxDiffPixelRatio: 0.01
-    snapshotDir: visual-hive.baselines
+    snapshotDir: .visual-hive/snapshots
     updateSnapshots: false
