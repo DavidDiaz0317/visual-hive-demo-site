@@ -1,40 +1,54 @@
 {
-  "acmm_level": 6,
+  "acmm_level": 5,
   "allowed_auto_merge_paths": [
-    "test/**",
-    "tests/**",
-    "**/*.test.*",
     "**/*.spec.*",
-    "**/*_test.go"
+    "**/*.test.*",
+    "**/*_test.go",
+    "test/**",
+    "tests/**"
   ],
   "allowed_auto_merge_risk": [
     0
   ],
   "allowed_repair_paths": [
     "src/**",
+    "**/src/**",
     "public/**",
+    "**/public/**",
     "index.html",
+    "**/index.html",
     "visual-hive.config.yaml",
+    "scripts/testing/**",
+    "**/scripts/testing/**",
     "test/**",
     "tests/**",
+    "**/test/**",
+    "**/tests/**",
     "**/*.test.*",
     "**/*.spec.*",
     "**/*_test.go"
   ],
-  "automation": "auto-merge",
-  "coverage": "comprehensive",
+  "automation": "repair-pr",
+  "coverage": "essential",
   "default_branch": "main",
-  "max_active_issues": 1,
-  "max_repair_attempts": 5,
+  "distribution_manifest_sha256": "",
+  "execution_mode": "local",
+  "hive_commit": "",
+  "hive_release_repository": "",
+  "hive_release_version": "",
+  "hosted_controller_protocol": 0,
+  "hosted_schedule": "",
+  "hosted_state_branch": "hive/state-1287566668",
+  "hosted_workflow_sha256": "",
+  "max_active_issues": 5,
+  "max_repair_attempts": 4,
   "provider": "codex",
   "repository": "DavidDiaz0317/visual-hive-demo-site",
   "repository_id": "1287566668",
-  "schema_version": "hive.integrated-config.v1",
+  "run_interval_seconds": 900,
+  "schema_version": "hive.integrated-repository-config.v3",
+  "setup_authorization_actor_id": 183157248,
   "test_commands": [
-    [
-      "node",
-      "--test"
-    ],
     [
       "npm",
       "run",
@@ -43,35 +57,16 @@
     [
       "npm",
       "run",
+      "build-storybook"
+    ],
+    [
+      "npm",
+      "run",
       "typecheck"
-    ],
-    [
-      "npm",
-      "run",
-      "vh:plan"
-    ],
-    [
-      "npm",
-      "run",
-      "vh:run"
-    ],
-    [
-      "npm",
-      "run",
-      "vh:mutate"
-    ],
-    [
-      "npm",
-      "run",
-      "vh:mutation-proof"
-    ],
-    [
-      "npm",
-      "run",
-      "vh:test-creation"
     ]
   ],
   "visual_hive": true,
-  "visual_hive_ref": "f67f936fe9a75c250a908e16806ef3b714a1478a",
+  "visual_hive_config_digest": "00b54b3d8282b699304b34a9e052c57586bf63ad01fc73c2a0dcd26d5f394c82",
+  "visual_hive_ref": "9fb0eebf4ec4c3f6653092c1fd53795d4d80523e",
   "visual_hive_repository": "DavidDiaz0317/visual-hive"
 }
