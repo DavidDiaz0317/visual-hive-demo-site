@@ -29,7 +29,7 @@
     "**/*_test.go"
   ],
   "automation": "repair-pr",
-  "coverage": "essential",
+  "coverage": "comprehensive",
   "default_branch": "main",
   "distribution_manifest_sha256": "",
   "execution_mode": "local",
@@ -50,6 +50,10 @@
   "setup_authorization_actor_id": 183157248,
   "test_commands": [
     [
+      "node",
+      "--test"
+    ],
+    [
       "npm",
       "run",
       "build"
@@ -66,7 +70,7 @@
     ]
   ],
   "visual_hive": true,
-  "visual_hive_config_digest": "4f7866fba42767d58a449885c847e11271f9e99823db15652e92f41fa40828bc",
-  "visual_hive_ref": "9fb0eebf4ec4c3f6653092c1fd53795d4d80523e",
+  "visual_hive_config_digest": "00921e3feaa986ba1c6976fbc62a1b9fb3f9d139864b28b88def0a4e0aa47531",
+  "visual_hive_ref": "1de3765924043ba87d46f200e8883b9233d94a18",
   "visual_hive_repository": "DavidDiaz0317/visual-hive"
 }
