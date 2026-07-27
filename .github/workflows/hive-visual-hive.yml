@@ -378,7 +378,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 npm run build
+          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 node --test
       - &hive-repository-test-cleanup
         name: Terminate isolated target processes and reverify source
         if: always()
@@ -424,11 +424,33 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 npm run build-storybook
+          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 npm run build
       - *hive-repository-test-cleanup
 
   repository-test-003:
     name: Hive repository test 003
+    if: ${{ inputs.hive_operation == 'production' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - *hive-repository-test-checkout
+      - *hive-repository-test-setup-node
+      - *hive-repository-test-setup-python
+      - *hive-repository-test-prepare-account
+      - *hive-repository-test-provision-tools
+      - *hive-repository-test-install-dependencies
+      - *hive-repository-test-seal-checkout
+      - name: Execute exact repository test command
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 npm run build-storybook
+      - *hive-repository-test-cleanup
+
+  repository-test-004:
+    name: Hive repository test 004
     if: ${{ inputs.hive_operation == 'production' }}
     permissions:
       contents: read
@@ -466,7 +488,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          ref: 1de3765924043ba87d46f200e8883b9233d94a18
           path: .hive-visual-tooling
           persist-credentials: false
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -481,7 +503,7 @@ jobs:
         working-directory: .hive-visual-tooling
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$HIVE_VISUAL_HIVE_REF"
@@ -1400,6 +1422,7 @@ jobs:
       - repository-test-001
       - repository-test-002
       - repository-test-003
+      - repository-test-004
     if: ${{ always() && inputs.hive_operation == 'production' }}
     permissions:
       contents: read
@@ -1411,7 +1434,7 @@ jobs:
         shell: bash
         env:
           HIVE_NEEDS_JSON: ${{ toJSON(needs) }}
-          HIVE_EXPECTED_REPOSITORY_JOBS: '["repository-test-001","repository-test-002","repository-test-003"]'
+          HIVE_EXPECTED_REPOSITORY_JOBS: '["repository-test-001","repository-test-002","repository-test-003","repository-test-004"]'
         run: |
           set -euo pipefail
           node <<'NODE'
@@ -1439,7 +1462,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          ref: 1de3765924043ba87d46f200e8883b9233d94a18
           path: .hive-visual-tooling
           persist-credentials: false
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -1451,7 +1474,7 @@ jobs:
         working-directory: .hive-visual-tooling
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$HIVE_VISUAL_HIVE_REF"
@@ -1466,7 +1489,7 @@ jobs:
       - name: Seal reverified release outside target checkout
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           case "$HIVE_VISUAL_HIVE_RELEASE_DIR" in
@@ -1745,7 +1768,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          ref: 1de3765924043ba87d46f200e8883b9233d94a18
           path: .hive-visual-tooling
           persist-credentials: false
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -1760,7 +1783,7 @@ jobs:
         working-directory: .hive-visual-tooling
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$HIVE_VISUAL_HIVE_REF"
@@ -2691,7 +2714,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          ref: 1de3765924043ba87d46f200e8883b9233d94a18
           path: .hive-visual-tooling
           persist-credentials: false
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -2703,7 +2726,7 @@ jobs:
         working-directory: .hive-visual-tooling
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$HIVE_VISUAL_HIVE_REF"
@@ -2718,7 +2741,7 @@ jobs:
       - name: Seal reverified release outside target checkout
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           case "$HIVE_VISUAL_HIVE_RELEASE_DIR" in

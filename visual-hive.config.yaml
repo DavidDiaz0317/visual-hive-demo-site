@@ -541,7 +541,7 @@ project:
     hiveConfigOrigin: existing
     hiveManagedBy: hive-integrated
     name: visual-hive-demo-site
-    setupProfile: free-local
+    setupProfile: complex-app
     type: react-vite
 providers:
     applitools:

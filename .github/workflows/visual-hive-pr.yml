@@ -67,8 +67,8 @@ jobs:
           HIVE_REQUIRED_FILES: '[".hive/integrated.json",".github/workflows/hive-visual-hive.yml","docs/hive-quickstart.md",".github/workflows/visual-hive-pr.yml","docs/visual-hive.md","visual-hive.config.yaml"]'
           HIVE_REQUIRED_ABSENT: '[".github/workflows/visual-hive-lifecycle.yml",".github/workflows/visual-hive-issue-lifecycle.yml",".github/workflows/visual-hive-trusted-publisher.yml",".github/workflows/visual-hive-failure-issue.yml",".github/workflows/visual-hive-hive-handoff.yml"]'
           HIVE_ALLOWED_FILES: '[".hive/integrated.json",".github/workflows/hive-visual-hive.yml","docs/hive-quickstart.md","docs/visual-hive.md","visual-hive.config.yaml",".github/workflows/visual-hive-pr.yml",".github/workflows/visual-hive-lifecycle.yml",".github/workflows/visual-hive-issue-lifecycle.yml",".github/workflows/visual-hive-trusted-publisher.yml",".github/workflows/visual-hive-failure-issue.yml",".github/workflows/visual-hive-hive-handoff.yml"]'
-          HIVE_UNINSTALL_REQUIRED_FILES: '[".hive/integrated.json",".github/workflows/hive-visual-hive.yml","docs/hive-quickstart.md","docs/visual-hive.md","visual-hive.config.yaml",".github/workflows/visual-hive-pr.yml",".github/workflows/visual-hive-hive-handoff.yml"]'
-          HIVE_UNINSTALL_REQUIRED_ABSENT: '[".github/workflows/visual-hive-lifecycle.yml",".github/workflows/visual-hive-issue-lifecycle.yml",".github/workflows/visual-hive-trusted-publisher.yml",".github/workflows/visual-hive-failure-issue.yml"]'
+          HIVE_UNINSTALL_REQUIRED_FILES: '[".hive/integrated.json",".github/workflows/hive-visual-hive.yml","docs/hive-quickstart.md","docs/visual-hive.md","visual-hive.config.yaml",".github/workflows/visual-hive-pr.yml"]'
+          HIVE_UNINSTALL_REQUIRED_ABSENT: '[".github/workflows/visual-hive-lifecycle.yml",".github/workflows/visual-hive-issue-lifecycle.yml",".github/workflows/visual-hive-trusted-publisher.yml",".github/workflows/visual-hive-failure-issue.yml",".github/workflows/visual-hive-hive-handoff.yml"]'
           HIVE_UNINSTALL_ALLOWED_FILES: '[".hive/integrated.json",".github/workflows/hive-visual-hive.yml","docs/hive-quickstart.md","docs/visual-hive.md","visual-hive.config.yaml",".github/workflows/visual-hive-pr.yml",".github/workflows/visual-hive-lifecycle.yml",".github/workflows/visual-hive-issue-lifecycle.yml",".github/workflows/visual-hive-trusted-publisher.yml",".github/workflows/visual-hive-failure-issue.yml",".github/workflows/visual-hive-hive-handoff.yml"]'
         run: |
           set -euo pipefail
@@ -388,7 +388,7 @@ jobs:
               });
             }
             const exact = Number(check.id) > 0 && check.name === "visual-hive" && String(check.head_sha || "").toLowerCase() === head &&
-              check.status === "completed" && check.conclusion === "success" && check.details_url === details && check.external_id === external &&
+              check.status === "completed" && check.conclusion === "success" && check.external_id === external &&
               check.app && String(check.app.slug || "").toLowerCase() === "github-actions";
             if (!exact) throw new Error("created or recovered uninstall check did not match the exact immutable authorization");
             console.log("Published exact authorized uninstall check " + check.id + " for " + head);
@@ -748,7 +748,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 npm run build
+          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 node --test
       - &hive-repository-test-cleanup
         name: Terminate isolated target processes and reverify source
         if: always()
@@ -795,11 +795,34 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 npm run build-storybook
+          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 npm run build
       - *hive-repository-test-cleanup
 
   repository-test-003:
     name: Hive repository test 003
+    needs: setup-authorization
+    if: ${{ github.event_name == 'pull_request' && needs.setup-authorization.outputs.operation != 'uninstall' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - *hive-repository-test-checkout
+      - *hive-repository-test-setup-node
+      - *hive-repository-test-setup-python
+      - *hive-repository-test-prepare-account
+      - *hive-repository-test-provision-tools
+      - *hive-repository-test-install-dependencies
+      - *hive-repository-test-seal-checkout
+      - name: Execute exact repository test command
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -u hive-target -- env -i -C "$HIVE_TARGET_WORKSPACE" HOME=/home/hive-target PATH="/home/hive-target/.local/bin:/home/hive-target/.venv/bin:$PATH" LANG=C.UTF-8 CI=true PLAYWRIGHT_BROWSERS_PATH=/home/hive-target/.cache/ms-playwright HIVE_TARGET_WORKSPACE="$HIVE_TARGET_WORKSPACE" HIVE_TARGET_PROCESS=1 npm run build-storybook
+      - *hive-repository-test-cleanup
+
+  repository-test-004:
+    name: Hive repository test 004
     needs: setup-authorization
     if: ${{ github.event_name == 'pull_request' && needs.setup-authorization.outputs.operation != 'uninstall' }}
     permissions:
@@ -839,7 +862,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          ref: 1de3765924043ba87d46f200e8883b9233d94a18
           path: .hive-visual-tooling
           persist-credentials: false
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -854,7 +877,7 @@ jobs:
         working-directory: .hive-visual-tooling
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$HIVE_VISUAL_HIVE_REF"
@@ -1770,7 +1793,7 @@ jobs:
             HIVE_TARGET_RUN_ID="$HIVE_TARGET_RUN_ID" \
             HIVE_TARGET_RUN_ATTEMPT="$HIVE_TARGET_RUN_ATTEMPT" \
             HIVE_TARGET_WORKFLOW="$HIVE_TARGET_WORKFLOW" \
-            HIVE_PRODUCER_COMMIT="9fb0eebf4ec4c3f6653092c1fd53795d4d80523e" \
+            HIVE_PRODUCER_COMMIT="1de3765924043ba87d46f200e8883b9233d94a18" \
             "$HIVE_TRUSTED_NODE" - <<'NODE'
           const crypto = require("crypto");
           const fs = require("fs");
@@ -2007,6 +2030,7 @@ jobs:
       - repository-test-001
       - repository-test-002
       - repository-test-003
+      - repository-test-004
     if: ${{ always() && github.event_name == 'pull_request' }}
     permissions:
       contents: read
@@ -2024,7 +2048,7 @@ jobs:
         if: ${{ needs.setup-authorization.outputs.operation != 'uninstall' }}
         with:
           repository: DavidDiaz0317/visual-hive
-          ref: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          ref: 1de3765924043ba87d46f200e8883b9233d94a18
           path: .hive-visual-tooling
           persist-credentials: false
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -2038,7 +2062,7 @@ jobs:
         working-directory: .hive-visual-tooling
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$HIVE_VISUAL_HIVE_REF"
@@ -2054,7 +2078,7 @@ jobs:
         if: ${{ needs.setup-authorization.outputs.operation != 'uninstall' }}
         shell: bash
         env:
-          HIVE_VISUAL_HIVE_REF: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_VISUAL_HIVE_REF: 1de3765924043ba87d46f200e8883b9233d94a18
         run: |
           set -euo pipefail
           case "$HIVE_VISUAL_HIVE_RELEASE_DIR" in
@@ -2319,7 +2343,7 @@ jobs:
         shell: bash
         env:
           HIVE_NEEDS_JSON: ${{ toJSON(needs) }}
-          HIVE_EXPECTED_REPOSITORY_JOBS: '["repository-test-001","repository-test-002","repository-test-003"]'
+          HIVE_EXPECTED_REPOSITORY_JOBS: '["repository-test-001","repository-test-002","repository-test-003","repository-test-004"]'
           HIVE_REPOSITORY: ${{ github.repository }}
           HIVE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HIVE_SETUP_AUTHORIZED: ${{ needs.setup-authorization.outputs.authorized }}
@@ -2450,7 +2474,7 @@ jobs:
           HIVE_WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
           HIVE_WORKFLOW_NAME: Visual Hive PR
           HIVE_WORKFLOW_PATH: .github/workflows/visual-hive-pr.yml
-          HIVE_PRODUCER_COMMIT: 9fb0eebf4ec4c3f6653092c1fd53795d4d80523e
+          HIVE_PRODUCER_COMMIT: 1de3765924043ba87d46f200e8883b9233d94a18
           HIVE_SOURCE_ARTIFACT_NAME: visual-hive-pr-source-${{ github.run_id }}-${{ github.run_attempt }}
           HIVE_BUNDLE_ARTIFACT_NAME: visual-hive-pr-bundle-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
@@ -2638,7 +2662,7 @@ jobs:
           if (!repositoryName.test(repository) || !repositoryName.test(baseRepository) || !repositoryName.test(headRepository) || repository.toLowerCase() !== baseRepository.toLowerCase()) fail("PR repository identity is invalid");
           if (![pullRequestNumber, baseRepositoryID, headRepositoryID, workflowRunID, workflowRunAttempt].every((value) => positiveInteger.test(value))) fail("PR numeric identity is invalid");
           if (!hex40.test(baseSHA) || !hex40.test(headSHA) || !hex40.test(producerCommit) || !hex64.test(baseWorkflowSHA256)) fail("PR immutable commit identity is invalid");
-          if (producerCommit !== "9fb0eebf4ec4c3f6653092c1fd53795d4d80523e") fail("PR lane requires the exact audited Visual Hive runtime-sidecar producer");
+          if (producerCommit !== "1de3765924043ba87d46f200e8883b9233d94a18") fail("PR lane requires the exact audited Visual Hive runtime-sidecar producer");
           if ([baseRef, headRef].some((value) => !value || value.startsWith("refs/pull/") || value.startsWith("refs/merge/") || /[\u0000-\u001f\u007f]/u.test(value))) fail("PR branch identity is invalid or merge-derived");
           if (sourceArtifactName !== `visual-hive-pr-source-${workflowRunID}-${workflowRunAttempt}` || bundleArtifactName !== `visual-hive-pr-bundle-${workflowRunID}-${workflowRunAttempt}`) fail("PR artifact names are not attempt-bound");
 
