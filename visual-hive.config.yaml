@@ -216,6 +216,16 @@ contracts:
         mustNotExist:
             - '[data-testid=''mobile-overflow-probe'']'
       severity: high
+      steps:
+        - action: goto
+          description: Start from the default mobile demo route.
+          route: /
+        - action: assertVisible
+          description: Mobile dashboard shell is visible.
+          selector: '[data-testid=''dashboard-page'']'
+        - action: assertVisible
+          description: Mobile critical action remains available.
+          selector: '[data-testid=''critical-action-button'']'
       target: localPreview
       waitFor:
         - selector: '[data-testid=''dashboard-page'']'
@@ -359,6 +369,17 @@ contracts:
             - API outage
             - api-500
       severity: medium
+      steps:
+        - action: goto
+          description: Open the seeded API outage Storybook fixture.
+          route: /iframe.html?id=visual-hive-test-lab-fixtures--scenario-mutation-card&viewMode=story
+        - action: assertVisible
+          description: API outage scenario fixture is visible.
+          selector: '[data-testid=''seeded-issue-api-500'']'
+        - action: assertText
+          description: Fixture retains its accessible visible API outage label.
+          selector: '[data-testid=''seeded-issue-api-500'']'
+          text: API outage
       target: componentLibrary
       waitFor:
         - selector: '[data-testid=''seeded-issue-api-500'']'
